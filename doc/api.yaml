@@ -2,20 +2,20 @@ openapi: 3.0.0
 info:
   title: WASAText
   description: |
-    API for WASAText, which is a online messaging application 
+    API for WASAText, which is a online messaging application
     similar to whatsapp
   version: 1.0.0
 
 components:
     schemas:
-        messages:
+
+        message:
             description:
                 a single message
             type: object
             properties:
                 id:
-                    description: identifier for the message
-                    type: integer
+                    $ref: #/components/schemas/messageId
                 status:
                     description: status of the message
                     type: string
@@ -29,7 +29,7 @@ components:
                 comment:
                     description: emoticon for the message
                     type: array
-                    items: 
+                    items:
                         $ref: "#/components/schemas/comment"
                 timestamp:
                     description: time when the message was sent
@@ -40,15 +40,12 @@ components:
                     description: user who sent the message
                     $ref: "#/components/schemas/user/properties/name"
 
-
-            
         conversation:
             description: a conversation head
             type: object
             properties:
                 id:
-                    description: identifier for the conversation
-                    type: integer
+                    $ref: "#/components/schemas/conversationId"
                 snippet:
                     description: snippet of the last message, string or picture
                     oneOf:
@@ -63,7 +60,7 @@ components:
                 picture:
                     description: picture of the user or group
                     $ref: "#/components/schemas/user/properties/picture"
-                date:                    
+                date:
                     description: time when the last message was sent
                     type: string
                     format: date-time
@@ -71,15 +68,15 @@ components:
                 content:
                     description: content of the  conversation
                     type: array
-                    items: 
-                        $ref: "#/components/schemas/messages"
+                    items:
+                        $ref: "#/components/schemas/message"
+
         user:
             description: a single user
             type: object
             properties:
                 id:
-                    description: identifier for the user
-                    type: integer
+                    $ref: #/components/schemas/userId"
                 name:
                     description: name of the user
                     type: string
@@ -87,19 +84,49 @@ components:
                     description: picture of the user
                     type: string
                     format: binary
+
         comment:
             description: a comment for the message
             type: object
             properties:
                 id:
-                    description: identifier for the comment
-                    type: integer
+                    $ref: "#/components/schemas/commentId"
                 content:
                     description: emoticon
                 user:
                     description: user who added the comment
                     $ref: "#/components/schemas/user/properties/name"
+
+        userId:
+          description: identifier for the user
+          in: path
+          required: true
+          type: integer
+
+        conversationId:
+          description: identifier for the conversation
+          in: path
+          required: true
+          type: integer
+
+        messageId:
+          description: identifier for the message
+          in: path
+          required: true
+          type: integer
+
+        commentId:
+          description: identifier for the comment
+          in: path
+          required: true
+          type: integer
+
+
+
+
+
 paths:
+
     /session:
         post:
             tags:
@@ -136,7 +163,10 @@ paths:
                                     identifier:
                                         type: string
                                         example: abcdef012345
-    /mainpageId:
+
+    /mainpage/{Id}/users:
+        parameters:
+        - $ref : "#/components/schemas/userId"
         get:
             operationId: getUsers
             description: lists all the users
@@ -147,29 +177,77 @@ paths:
                         application/json:
                             schema:
                                 type: array
-                                items: 
+                                items:
                                     $ref: "#/components/schemas/user/properties/name"
-        
-    /mainpageId/settings/name:
+
+    /mainpage/{Id}/users/specificUser:
+      parameters:
+        - $ref: "#/components/schemas/userId"
+      get:
+        operationId: getSpecificUsers
+        description: from the list of users search for a specific user
+        parameters:
+          - in: query
+            required: false
+            $ref: "#/components/schemas/user/properties/name"
+        responses:
+          "200":
+            description: a user
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/user"
+          "404":
+            description: user not found
+
+
+    /mainpage/{Id}/settings/name:
+        parameters:
+        - $ref: "#/components/schemas/userId"
         put:
             operationId: setMyUserName
             description: change the name of the user
+            requestBody:
+              required: true
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/user/properties/name"
+
             responses:
-                "200":
+                "204":
                     description: successfully changed the name
-                "403":
-                    description: name already in use by a different user
-    /mainpageId/settings/picture:
+                "400":
+                    description: could not change into this name
+
+    /mainpage/{Id}/settings/picture:
+        parameters:
+        - $ref: "#/components/schemas/userId"
         put:
             operationId: setMyPhoto
             description: change the picture of the user
+            requestBody:
+              required: true
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/user/properties/picture"
             responses:
-                "200":
+                "204":
                     description: successfully changed the picture
-    /mainpageId/conversations:
+                "400":
+                  description: could not change the picture
+
+    /mainpage/{Id}/conversations:
+        parameters:
+        - $ref: "#/components/schemas/userId"
         get:
             operationId: getMyConversations
             description: list all my conversations
+            parameters:
+              - in: query
+                required: false
+                $ref: "#/components/schemas/conversationId"
             responses:
                 "200":
                     description: array of conversations
@@ -177,17 +255,27 @@ paths:
                         application/json:
                             schema:
                                 type: array
-                                items: 
+                                items:
                                     $ref: "#/components/schemas/conversation"
         post:
             operationId: startNewConversation
             description: start a new conversation with a user by name
+            requestBody:
+              required: true
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/user/properties/name"
             responses:
-                "200":
+                "201":
                     description: conversation successfully created
                 "403":
                     description: user not found
-    /mainpageId/conversations/conversationId:
+
+    /mainpage/{Id}/conversations/{conversationId}:
+        parameters:
+        - $ref: "#/components/schemas/userId"
+        - $ref: "#/components/schemas/conversationId"
         get:
             operationId: getConversation
             description: get a specific conversation
@@ -198,87 +286,189 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/conversation"
+                "404":
+                  description: conversation not found
         post:
             operationId: sendMessage
             description: send a new message
+            requestBody:
+              required: true
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/message/properties/content"
             responses:
                 "201":
                     description: message successfully sent
-    /mainpageId/conversations/conversationId/conversationsettings/groupname:
-        put:
-            operationId: setGroupName
-            description: change the name of the group
-            responses:
-                "200":
-                    description: successfully changed the name
-    /mainpageId/conversations/conversationId/conversationsettings/grouppicture:
-        put:
-            operationId: setGroupPhoto
-            description: change the picture of the group
-            responses:
-                "200":
-                    description: successfully changed the picture
-    /mainpageId/conversations/conversationId/messageId:
-        delete:
-            operationId: deleteMessage
-            description: delete my message
-            responses:
-                "204":
-                    description: message successfully deleted
-        get:
-            operationId: getMessage
-            description: get a specific message
-            responses:
-                "200":
-                    description: object message
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/messages"
-        post:
-            operationId: forwardMessage
-            description: forward the message to other conversation
-            responses:
-                "201":
-                    description: message successfully forwarded
-    /mainpageId/conversations/conversationId/messageId/comments:
-        get:
-            operationId: getComments
-            description: get all comments for this message
-            responses:
-                "200":
-                    description: array of comments
-                    content:
-                        application/json:
-                            schema:
-                                type: array
-                                items: 
-                                    $ref: "#/components/schemas/comment"
-        post:
-            operationId: commentMessage
-            description: add a new comment on this message
-            responses:
-                "201":
-                    description: comment successfully added
-    /mainpageId/conversations/conversationId/messageId/comments/commentId:
-        delete:
-            operationId: uncommentMessage
-            description: delete my comment
-            responses:
-                "204":
-                    description: comment successfully deleted
-    /mainpageId/conversations/conversationId/groupMembers:
-        post:
-            operationId: addToGroup
-            description: add a member to the group
-            responses:
-                "201":
-                    description: user successfully added
-        delete:
-            operationId: leaveGroup
-            description: leave this group
-            responses:
-                "204":
-                    description: left the group
 
-      allowEmptyValue: false
+    /mainpage/{Id}/conversations/{conversationId}/conversationsettings/groupname:
+      parameters:
+      - $ref: "#/components/schemas/userId"
+      - $ref: "#/components/schemas/conversationId"
+      put:
+        operationId: setGroupName
+        description: change the name of the group
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/conversation/properties/name"
+        responses:
+          "204":
+            description: successfully changed the name
+          "400":
+            description: name could not be changed
+
+    /mainpage/{Id}/conversations/{conversationId}/conversationsettings/grouppicture:
+      parameters:
+      - $ref: "#/components/schemas/userId"
+      - $ref: "#/components/schemas/conversationId"
+      put:
+        operationId: setGroupPhoto
+        description: change the picture of the group
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/conversation/properties/picture"
+        responses:
+          "204":
+            description: successfully changed the picture
+
+    /mainpage/{Id}/conversations/{conversationId}/{messageId}:
+      parameters:
+      - $ref: "#/components/schemas/userId"
+      - $ref: "#/components/schemas/conversationId"
+      - $ref : "#/components/schemas/messageId"
+      delete:
+        operationId: deleteMessage
+        description: delete my message
+        responses:
+          "200":
+            description: message successfully deleted
+          "404":
+            description: message not found
+      get:
+        operationId: getMessage
+        description: get a specific message
+        responses:
+          "200":
+            description: object message
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/message"
+          "404":
+            description: message not found
+      post:
+        operationId: forwardMessage
+        description: forward the message to other conversation
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user/properties/name"
+        responses:
+          "201":
+            description: message successfully forwarded
+          "404":
+            description: could not find the user
+
+    /mainpage/{Id}/conversations/{conversationId}/{messageId}/comments:
+      parameters:
+      - $ref: "#/components/schemas/userId"
+      - $ref: "#/components/schemas/conversationId"
+      - $ref : "#/components/schemas/messageId"
+      get:
+        operationId: getComments
+        description: get all comments for this message
+        responses:
+          "200":
+            description: array of comments
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/comment"
+      post:
+        operationId: commentMessage
+        description: add a new comment on this message
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/comment/properties/content"
+        responses:
+          "201":
+            description: comment successfully added
+
+    /mainpage/{Id}/conversations/{conversationId}/{messageId}/comments/{commentId}:
+      parameters:
+      - $ref: "#/components/schemas/userId"
+      - $ref: "#/components/schemas/conversationId"
+      - $ref : "#/components/schemas/messageId"
+      - $ref : "#/components/schemas/commentId"
+      get:
+        operationId: getSpecificComment
+        description: get a specific comment for this message
+        responses:
+          "200":
+            description: a comment
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/comment"
+          "404":
+            description: comment not found
+      delete:
+        operationId: uncommentMessage
+        description: delete my comment
+        responses:
+          "200":
+            description: comment successfully deleted
+          "404":
+            description: comment not found
+
+    /mainpage/{Id}/conversations/{conversationId}/groupMembers:
+      parameters:
+      - $ref: "#/components/schemas/userId"
+      - $ref: "#/components/schemas/conversationId"
+      get:
+        operationId: listGroupMembers
+        description: see all the group members
+        responses:
+          "200":
+            description: array of group member names
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/user/properties/name"
+      post:
+        operationId: addToGroup
+        description: add a member to the group
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user/properties/name"
+        responses:
+          "201":
+            description: user successfully added
+          "404":
+            description: user not found
+      delete:
+        operationId: leaveGroup
+        description: leave this group
+        responses:
+          "200":
+            description: left the group
+          "404":
+            description: group not found
