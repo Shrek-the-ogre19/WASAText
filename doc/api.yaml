@@ -259,9 +259,9 @@ paths:
                                     $ref: "#/components/schemas/conversation"
         post:
             operationId: startNewConversation
-            description: start a new conversation with a user by name
+            description: start a new conversation with a user by name, or a group
             requestBody:
-              required: true
+              required: false
               content:
                 application/json:
                   schema:
@@ -269,6 +269,10 @@ paths:
             responses:
                 "201":
                     description: conversation successfully created
+                    content:
+                      application/json:
+                        schema:
+                          $ref: "#/components/schemas/conversationId"
                 "403":
                     description: user not found
 
@@ -300,6 +304,10 @@ paths:
             responses:
                 "201":
                     description: message successfully sent
+                    content:
+                      application/json:
+                        schema:
+                          $ref: "#/components/schemas/messageId"
 
     /mainpage/{Id}/conversations/{conversationId}/conversationsettings/groupname:
       parameters:
@@ -374,6 +382,10 @@ paths:
         responses:
           "201":
             description: message successfully forwarded
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/messageId"
           "404":
             description: could not find the user
 
@@ -406,6 +418,10 @@ paths:
         responses:
           "201":
             description: comment successfully added
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/commentId"
 
     /mainpage/{Id}/conversations/{conversationId}/{messageId}/comments/{commentId}:
       parameters:
