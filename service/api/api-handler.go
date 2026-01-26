@@ -13,5 +13,13 @@ func (rt *_router) Handler() http.Handler {
 	// Special routes
 	rt.router.GET("/liveness", rt.liveness)
 
+	// Routes
+	rt.router.GET("/mainpage/:id/users", rt.getUsers)
+	//rt.router.GET("/mainpage/:id/users", rt.getUsers)
+	//rt.router.GET("/mainpage/:id/users", rt.getUsers)
+	//rt.router.GET("/mainpage/:id/users", rt.getUsers)
+	//rt.router.GET("/mainpage/:id/users", rt.getUsers)
+	//rt.router.GET("/mainpage/:id/users", rt.getUsers)
+
 	return rt.router
 }
