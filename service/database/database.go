@@ -36,12 +36,22 @@ import (
 	"fmt"
 )
 
+
 // AppDatabase is the high level interface for the DB
 type AppDatabase interface {
 	GetName() (string, error)
 	SetName(name string) error
 
 	Ping() error
+
+	CountUsers()(int, error)
+	AddUser(name string) error
+	ChangeUserName(id UserId, name string) error
+	ChangeUserPicture(id UserId, picture string) error
+	GetUserId(name string) (UserId, error)
+	GetUser(id UserId) (User, error)
+	ListAllUsers()([]string, error)
+	UserLookup(name string)(bool, error)
 }
 
 type appdbimpl struct {
@@ -65,6 +75,20 @@ func New(db *sql.DB) (AppDatabase, error) {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
 		}
 	}
+
+
+
+	CreateTableUsers := `CREATE TABLE IF NOT EXISTS users (
+	id INTEGER NOT NULL UNIQUE,
+	name TEXT NOT NULL UNIQUE,
+	picture TEXT);`
+	_, err = db.Exec(CreateTableUsers)
+	if err != nil {
+		return nil, fmt.Errorf("error creating database structure: %w", err)
+	}
+
+
+
 
 	return &appdbimpl{
 		c: db,

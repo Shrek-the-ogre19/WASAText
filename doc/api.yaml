@@ -184,10 +184,11 @@ paths:
       parameters:
         - $ref: "#/components/schemas/userId"
       get:
-        operationId: getSpecificUsers
+        operationId: getSpecificUser
         description: from the list of users search for a specific user
         parameters:
-          - in: query
+          - name: name
+            in: query
             required: false
             $ref: "#/components/schemas/user/properties/name"
         responses:

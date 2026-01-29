@@ -1,4 +1,4 @@
-package api
+package database
 
 type UserId struct {
 	Id int
@@ -17,8 +17,8 @@ type CommentId struct {
 }
 
 type User struct {
-	Id      UserId
-	Name    string
+	Id   UserId
+	Name string
 	Picture string
 }
 
