@@ -52,6 +52,41 @@ type AppDatabase interface {
 	GetUser(id UserId) (User, error)
 	ListAllUsers()([]string, error)
 	UserLookup(name string)(bool, error)
+	AddConversations(id UserId, newConvId int)(error)
+
+	GetConversations(id UserId)([]ConversationId, error)
+	CountConversations()(int, error)
+	StartConversation(sender UserId, receivers []string)(error)
+	GetConversation(id ConversationId)(Conversation, error)
+	ChangeConversationName(id ConversationId, NewName string)(error)
+	ChangeConversationPhoto(id ConversationId, NewPicture string)(error)
+	GetAllMembers(id ConversationId)([]string,error)
+	AddMembers(id ConversationId, Name string)(error)
+	LeaveGroup(convid ConversationId, userid UserId)(error)
+	CheckGroupchat(id ConversationId) (bool, error)
+	UpdateConversationHead(id ConversationId, snippetNew string, dateNew string)(error)
+	UpdateContent(id ConversationId, newMessageId int)(error)
+	RemoveFromContent(id ConversationId, oldMessageId int)(error)
+	GetConversationMessages(id ConversationId) ([]MessageId, error)
+	CheckIfInConversation(userId UserId, receiver string)(ConversationId,error)
+
+	CountMessages()(int, error)
+	CreateMessage(senderId UserId, conversationId ConversationId, text string)(error)
+	GetMessage(id MessageId)(Message, error)
+	UpdateStatus(id MessageId)(error)
+	ForwardMessage(userId UserId, messageId MessageId, conversationId ConversationId)(error)
+	DeleteMessage(messageId MessageId, conversationId ConversationId)(error)
+	GetComments(id MessageId)([]CommentId, error)
+	AddCommentToMessage(messageId MessageId, newCommentId CommentId)(error)
+	RemoveCommentFromMessage(messageId MessageId, oldCommentId CommentId)(error)
+
+
+	CountComments()(int, error)
+	CreateComment(userId UserId, messageId MessageId, content string)(error)
+	GetComment(id CommentId)(Comment, error)
+	DeleteComment(id CommentId, messageId MessageId)(error)
+	CheckIfUserCommented(id CommentId, userId UserId)(bool, error)
+
 }
 
 type appdbimpl struct {
@@ -66,6 +101,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 	}
 
 	// Check if table exists. If not, the database is empty, and we need to create the structure
+	/*
 	var tableName string
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='example_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -75,18 +111,59 @@ func New(db *sql.DB) (AppDatabase, error) {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
 		}
 	}
-
+*/
 
 
 	CreateTableUsers := `CREATE TABLE IF NOT EXISTS users (
 	id INTEGER NOT NULL UNIQUE,
 	name TEXT NOT NULL UNIQUE,
-	picture TEXT);`
-	_, err = db.Exec(CreateTableUsers)
+	picture TEXT,
+	conversations TEXT);`
+	_, err := db.Exec(CreateTableUsers)
 	if err != nil {
 		return nil, fmt.Errorf("error creating database structure: %w", err)
 	}
 
+
+
+	CreateTableConversation := `CREATE TABLE IF NOT EXISTS conversations (
+	id INTEGER NOT NULL UNIQUE,
+	snippet TEXT,
+	name TEXT,
+	picture TEXT,
+	date DATETIME,
+	content TEXT,
+	groupchat BOOL,
+	members TEXT);`
+	_, err = db.Exec(CreateTableConversation)
+	if err != nil {
+		return nil, fmt.Errorf("error creating database structure: %w", err)
+	}
+
+
+
+	CreateTableMessages := `CREATE TABLE IF NOT EXISTS messages (
+	id INTEGER NOT NULL UNIQUE,
+	status    TEXT,
+	content   TEXT,
+	comments   TEXT,
+	timestamp DATETIME,
+	senderId INTEGER,
+	conversationId INTEGER);`
+	_, err = db.Exec(CreateTableMessages)
+	if err != nil {
+		return nil, fmt.Errorf("error creating database structure: %w", err)
+	}
+
+	CreateTableComments := `CREATE TABLE IF NOT EXISTS comments (
+	id INTEGER NOT NULL UNIQUE,
+	content   TEXT,
+	user int,
+	message int);`
+	_, err = db.Exec(CreateTableComments)
+	if err != nil {
+		return nil, fmt.Errorf("error creating database structure: %w", err)
+	}
 
 
 

@@ -30,15 +30,18 @@ components:
                     description: emoticon for the message
                     type: array
                     items:
-                        $ref: "#/components/schemas/comment"
+                        $ref: "#/components/schemas/commentId"
                 timestamp:
                     description: time when the message was sent
                     type: string
                     format: date-time
                     example: '2019-10-19 17:12:30'
-                user:
+                sender:
                     description: user who sent the message
-                    $ref: "#/components/schemas/user/properties/name"
+                    $ref: "#/components/schemas/userId"
+                conversation:
+                  description: conversation that the message belongs to
+                  $ref: "#/components/schemas/conversationId"
 
         conversation:
             description: a conversation head
@@ -70,6 +73,14 @@ components:
                     type: array
                     items:
                         $ref: "#/components/schemas/message"
+                groupchat:
+                  description: if it is group or not
+                  type: boolean
+                members:
+                  description: members of the group
+                  type: array
+                  items:
+                  - $ref:  "#/components/schemas/userId"
 
         user:
             description: a single user
@@ -84,6 +95,11 @@ components:
                     description: picture of the user
                     type: string
                     format: binary
+                conversations:
+                    description: list of all conversations
+                    type: array
+                    items:
+                      - $ref:  "#/components/schemas/conversationId"
 
         comment:
             description: a comment for the message
@@ -266,7 +282,9 @@ paths:
               content:
                 application/json:
                   schema:
-                    $ref: "#/components/schemas/user/properties/name"
+                    type: array
+                    items:
+                      - $ref: "#/components/schemas/user/properties/name"
             responses:
                 "201":
                     description: conversation successfully created

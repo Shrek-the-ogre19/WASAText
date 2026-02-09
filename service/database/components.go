@@ -20,6 +20,7 @@ type User struct {
 	Id   UserId
 	Name string
 	Picture string
+	Conversations []ConversationId
 }
 
 type Conversation struct {
@@ -28,20 +29,24 @@ type Conversation struct {
 	Name    string
 	Picture string
 	Date    string
-	Content []Message
+	Content   []MessageId
+	Groupchat bool
+	Members   []UserId
 }
 
 type Message struct {
 	Id        MessageId
 	Status    string
 	Content   string
-	Comment   []Comment
+	Comments   []CommentId
 	Timestamp string
-	User      User
+	Sender      UserId
+	ConversationId ConversationId
 }
 
 type Comment struct {
 	Id      CommentId
 	Content string
-	User    User
+	User    UserId
+	Message MessageId
 }

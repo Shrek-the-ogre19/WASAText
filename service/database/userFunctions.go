@@ -1,5 +1,7 @@
 package database
 
+import "strconv"
+
 func (db *appdbimpl) CountUsers()(int, error){
 	var count int
 	err := db.c.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
@@ -8,10 +10,12 @@ func (db *appdbimpl) CountUsers()(int, error){
 	}
 	return count, err
 }
+
 func (db *appdbimpl) AddUser(name string)(error){
 	id, err := db.CountUsers()
 	var picture = "this will be the default picture"
-	_, err = db.c.Exec("INSERT INTO users (id, name, picture) VALUES (?, ?, ?)", id+1,name, picture)
+	var conversations string
+	_, err = db.c.Exec("INSERT INTO users (id, name, picture, conversations) VALUES (?, ?, ?, ?)", id+1, name, picture, conversations)
 	return err
 }
 
@@ -42,9 +46,12 @@ func (db *appdbimpl) GetUser(id UserId) (User, error) {
 	var user User
 	var name string
 	var picture string
-	err := db.c.QueryRow("SELECT name, picture FROM users WHERE id = ?", id.Id).Scan(&name, &picture)
+	var conversationsR string
+	var conversations []ConversationId
+	err := db.c.QueryRow("SELECT name, picture, conversations FROM users WHERE id = ?", id.Id).Scan(&name, &picture, &conversationsR)
+	conversations = ConvertConversations(conversationsR)
 	if err == nil {
-		user = User{id, name, picture}
+		user = User{id, name, picture, conversations}
 	}
 	return user, err
 }
@@ -70,4 +77,16 @@ func (db *appdbimpl) UserLookup(name string) (bool, error){
 		return bool, err
 	}
 	return false, nil
+}
+
+func (db *appdbimpl) AddConversations(id UserId, newConvId int)(error){
+	var conversations string
+	err := db.c.QueryRow("SELECT conversations FROM users WHERE id = ?", id.Id).Scan(&conversations)
+	if conversations != ""{
+		conversations = conversations + ","}
+	conversations = conversations + strconv.Itoa(newConvId)
+	_, err = db.c.Exec(`UPDATE users
+SET conversations = ?
+WHERE id = ?;`, conversations, id.Id)
+	return err
 }
