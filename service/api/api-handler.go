@@ -14,8 +14,8 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/liveness", rt.liveness)
 
 	// Routes
-	rt.router.POST("/mainpage/:id/users", rt.doLogin)
-	rt.router.GET("/mainpage/sessions", rt.getUsers)
+	rt.router.POST("/mainpage/session", rt.doLogin)
+	rt.router.GET("/mainpage/:id/users", rt.getUsers)
 	rt.router.GET("/mainpage/:Id/users/specificUser", rt.getSpecificUser)
 	rt.router.PUT("/mainpage/:Id/settings/name", rt.setMyUserName)
 	rt.router.PUT("/mainpage/:Id/settings/picture", rt.setMyPhoto)

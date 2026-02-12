@@ -15,7 +15,7 @@ func (db *appdbimpl) CountMessages()(int, error){
 }
 
 
-func (db *appdbimpl) CreateMessage(senderId UserId, conversationId ConversationId, text string)(error){
+func (db *appdbimpl) CreateMessage(senderId UserId, conversationId ConversationId, text string)(MessageId, error){
 	id, err := db.CountMessages()
 	var status = "sent"
 	var content = text
@@ -43,8 +43,8 @@ func (db *appdbimpl) CreateMessage(senderId UserId, conversationId ConversationI
 		db.UpdateConversationHead(conversationId, snippet, timestamp)
 	}
 
-
-	return err
+	var messageId = MessageId{id+1}
+	return messageId, err
 }
 
 

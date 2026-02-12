@@ -10,8 +10,7 @@ components:
     schemas:
 
         message:
-            description:
-                a single message
+            description: a single message
             type: object
             properties:
                 id:
@@ -397,7 +396,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/user/properties/name"
+                $ref: "#/components/schemas/conversation/properties/name"
         responses:
           "201":
             description: message successfully forwarded

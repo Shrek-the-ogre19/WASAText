@@ -9,11 +9,11 @@ func (db *appdbimpl) CountComments()(int, error){
 	return count, err
 }
 
-func (db *appdbimpl) CreateComment(userId UserId, messageId MessageId, content string)(error){
+func (db *appdbimpl) CreateComment(userId UserId, messageId MessageId, content string)(CommentId, error){
 	id, err := db.CountComments()
 	_, err = db.c.Exec("INSERT INTO comments (id, content, user, message) VALUES (?, ?, ?, ?)", id+1, content, userId.Id, messageId.Id)
 	if err ==nil{db.AddCommentToMessage(messageId, CommentId{id+1})}
-	return err
+	return CommentId{id+1}, err
 }
 
 func (db *appdbimpl) GetComment(id CommentId)(Comment, error){

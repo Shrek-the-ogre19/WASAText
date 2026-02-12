@@ -23,7 +23,7 @@ func (db *appdbimpl) CountConversations()(int, error){
 	return count, err
 }
 
-func (db *appdbimpl) StartConversation(sender UserId, receivers []string)(error){
+func (db *appdbimpl) StartConversation(sender UserId, receivers []string)(ConversationId, error){
 	id, err := db.CountConversations()
 	var snippet string = ""
 	var groupchat bool
@@ -78,7 +78,8 @@ func (db *appdbimpl) StartConversation(sender UserId, receivers []string)(error)
 
 
 	_, err = db.c.Exec("INSERT INTO conversations (id, snippet, name, picture, date, content, groupchat, members) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", id+1, snippet, name, picture, date, content, groupchat, members )
-	return err
+	var conversationId = ConversationId{id+1}
+	return conversationId, err
 }
 
 

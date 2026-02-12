@@ -1,14 +1,14 @@
 package api
 
-
 import (
 	"encoding/json"
 	"net/http"
 
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
-	"github.com/julienschmidt/httprouter"
 	"fmt"
 	"strconv"
+
+	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
+	"github.com/julienschmidt/httprouter"
 )
 
 
@@ -37,7 +37,7 @@ func ( rt *_router) doLogin(w http. ResponseWriter, r *http.Request, ps httprout
 
 func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
-	userId,err := strconv.Atoi(ps.ByName("userId"))
+	userId,err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -48,6 +48,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 	}
 	if userId <0 || userId > count{
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 	users, err := rt.db.ListAllUsers()
 	if err!= nil{
@@ -58,7 +59,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 
 func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
 	w.Header().Set("content-type", "application/json")
-	userId,err := strconv.Atoi(ps.ByName("userId"))
+	userId,err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -69,6 +70,7 @@ func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps ht
 	}
 	if userId <0 || userId > count{
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 	var name string = r.URL.Query().Get("name")
 	id, err := rt.db.GetUserId(name)
@@ -85,7 +87,7 @@ func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps ht
 
 func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
 	w.Header().Set("content-type", "application/json")
-	userId,err := strconv.Atoi(ps.ByName("userId"))
+	userId,err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -96,6 +98,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 	}
 	if userId <0 || userId > count{
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 	var name string = r.URL.Query().Get("")
 	var id database.UserId = database.UserId{userId}
@@ -105,7 +108,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 
 func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
 	w.Header().Set("content-type", "application/json")
-	userId,err := strconv.Atoi(ps.ByName("userId"))
+	userId,err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -116,6 +119,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 	if userId <0 || userId > count{
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 	var picture string = r.URL.Query().Get("")
 	var id database.UserId = database.UserId{userId}

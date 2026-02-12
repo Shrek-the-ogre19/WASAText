@@ -56,7 +56,7 @@ type AppDatabase interface {
 
 	GetConversations(id UserId)([]ConversationId, error)
 	CountConversations()(int, error)
-	StartConversation(sender UserId, receivers []string)(error)
+	StartConversation(sender UserId, receivers []string)(ConversationId, error)
 	GetConversation(id ConversationId)(Conversation, error)
 	ChangeConversationName(id ConversationId, NewName string)(error)
 	ChangeConversationPhoto(id ConversationId, NewPicture string)(error)
@@ -71,7 +71,7 @@ type AppDatabase interface {
 	CheckIfInConversation(userId UserId, receiver string)(ConversationId,error)
 
 	CountMessages()(int, error)
-	CreateMessage(senderId UserId, conversationId ConversationId, text string)(error)
+	CreateMessage(senderId UserId, conversationId ConversationId, text string)(MessageId, error)
 	GetMessage(id MessageId)(Message, error)
 	UpdateStatus(id MessageId)(error)
 	ForwardMessage(userId UserId, messageId MessageId, conversationId ConversationId)(error)
@@ -82,7 +82,7 @@ type AppDatabase interface {
 
 
 	CountComments()(int, error)
-	CreateComment(userId UserId, messageId MessageId, content string)(error)
+	CreateComment(userId UserId, messageId MessageId, content string)(CommentId, error)
 	GetComment(id CommentId)(Comment, error)
 	DeleteComment(id CommentId, messageId MessageId)(error)
 	CheckIfUserCommented(id CommentId, userId UserId)(bool, error)
