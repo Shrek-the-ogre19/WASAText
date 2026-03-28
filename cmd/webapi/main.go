@@ -28,17 +28,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/rand"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/globaltime"
 	"github.com/ardanlabs/conf"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"
-	"math/rand"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 // main is the program entry point. The only purpose of this function is to call run() and set the exit code if there is
@@ -82,6 +83,7 @@ func run() error {
 
 	// Start Database
 	logger.Println("initializing database support")
+	fmt.Println("USING DATABASE PATH:", cfg.DB.Filename) // ADD THIS
 	dbconn, err := sql.Open("sqlite3", cfg.DB.Filename)
 	if err != nil {
 		logger.WithError(err).Error("error opening SQLite DB")
@@ -91,6 +93,7 @@ func run() error {
 		logger.Debug("database stopping")
 		_ = dbconn.Close()
 	}()
+
 	db, err := database.New(dbconn)
 	if err != nil {
 		logger.WithError(err).Error("error creating AppDatabase")
@@ -173,8 +176,8 @@ func run() error {
 
 		// Log the status of this shutdown.
 		switch {
-		case sig == syscall.SIGSTOP:
-			return errors.New("integrity issue caused shutdown")
+		//case sig == syscall.SIGSTOP:
+		//return errors.New("integrity issue caused shutdown")
 		case err != nil:
 			return fmt.Errorf("could not stop server gracefully: %w", err)
 		}

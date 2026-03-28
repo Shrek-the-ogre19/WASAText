@@ -17,7 +17,7 @@ export default{
 			try {
 				let response = await this.$axios.post("/session", {username});
 				this.userId = response.data;
-				this.$router.push(`/mainpage/${this.userId}`)
+				this.$router.push(`/mainpage/${this.userId}/conversations`)
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
