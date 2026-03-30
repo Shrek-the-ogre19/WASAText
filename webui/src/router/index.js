@@ -18,8 +18,8 @@ const router = createRouter({
 		{path: "/session", component: LoginView},
 		{path: "/mainpage/:Id/conversations", component: MainpageView, props: true},
 		{path: "/mainpage/:Id", component: ProfileView},
-		{path: "/mainpage/:Id/users", component: UsersListView},
-		{path: "/mainpage/:Id/conversations/:conversationId", component: ConversationView}
+		{path: "/:Id/users", component: UsersListView},
+		{path: "/:Id/conversations/:conversationId", component: ConversationView}
 
 	]
 })

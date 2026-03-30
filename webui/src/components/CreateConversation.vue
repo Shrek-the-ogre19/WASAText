@@ -12,7 +12,7 @@ export default {
 			default: false
 		},
 		title: {
-			type: CreateConversation,
+			type: Boolean,
 			default: 'Modal'
 		}
 	},
