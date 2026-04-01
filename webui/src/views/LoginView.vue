@@ -9,13 +9,16 @@ export default{
 	},
 	methods:{
 		async login(username){
+			console.log("in login method")
 			if (!username || username.trim() === '') {
 				this.errormsg = 'Username is required'
 				return
 			}
 
 			try {
-				let response = await this.$axios.post("/session", {username});
+				console.log("before post", username)
+				let response = await this.$axios.post("/session", {name: username});
+				console.log("after post")
 				this.userId = response.data;
 				this.$router.push(`/mainpage/${this.userId}/conversations`)
 			} catch (e) {
