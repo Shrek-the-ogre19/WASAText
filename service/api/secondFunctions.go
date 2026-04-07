@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
 	"github.com/julienschmidt/httprouter"
@@ -84,10 +85,11 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 	}
 
 	var requestData struct {
-		Receivers []string `json:"receivers"`
+		Receivers string `json:"receivers"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&requestData)
-	var receivers []string = requestData.Receivers
+	var receiversst string = requestData.Receivers
+	receivers := strings.Split(receiversst, ",")
 
 	var conversationId database.ConversationId
 	if len(receivers) == 1 {

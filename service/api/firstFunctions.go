@@ -17,7 +17,6 @@ func (rt *_router) handleOptions(w http.ResponseWriter, r *http.Request, ps http
 
 func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
-	fmt.Println("in backend function")
 	var id database.UserId
 	//var name string = r.URL.Query().Get("name")
 	var requestData struct {
@@ -65,19 +64,20 @@ func (rt *_router) getSelf(w http.ResponseWriter, r *http.Request, ps httprouter
 
 func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
-	userId, err := strconv.Atoi(ps.ByName("Id"))
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	count, err := rt.db.CountUsers()
-	if err != nil {
-		fmt.Println("error in function CountUsers")
-	}
-	if userId < 0 || userId > count {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	fmt.Println("in function")
+	//userId, err := strconv.Atoi(ps.ByName("Id"))
+	//if err != nil {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	return
+	//}
+	//count, err := rt.db.CountUsers()
+	//if err != nil {
+	//	fmt.Println("error in function CountUsers")
+	//}
+	//if userId < 0 || userId > count {
+	//	w.WriteHeader(http.StatusNotFound)
+	//	return
+	//}
 	users, err := rt.db.ListAllUsers()
 	if err != nil {
 		fmt.Println("error in function ListAllUsers")

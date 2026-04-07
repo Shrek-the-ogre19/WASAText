@@ -13,18 +13,12 @@ export default {
 			this.loading = true;
 			this.errormsg = null;
 			try {
-				let response = await this.$axios.get(this.path);
+				let response = await this.$axios.get("mainpage/0/users");
 				this.users = response.data;
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
 			this.loading = false;
-		},
-		async goBack(){
-			let pathParts = path.split('/');
-			pathParts.pop();
-			let newPath = pathParts.join('/');
-			await this.$router.push(newPath+ "/conversations");
 		}
 	},
 	mounted() {
@@ -34,7 +28,9 @@ export default {
 </script>
 
 <template>
-
+	<li v-for="item in users">
+		{{ item }}
+	</li>
 </template>
 
 <style scoped>

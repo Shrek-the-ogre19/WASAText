@@ -1,12 +1,32 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-</script>
 <script>
-export default {}
+import { RouterLink, RouterView } from 'vue-router'
+export default {
+	data: function () {
+		return {
+			userId: null
+		}
+	},
+	methods: {
+		updateUserId() {
+			this.userId = localStorage.getItem("id")
+		},
+		logout(){
+			this.userId = null
+			localStorage.removeItem("id")
+		}
+	},
+	mounted() {
+		this.updateUserId()
+	},
+	watch: {
+		'$route'() {
+			this.updateUserId()
+		}
+	}
+}
 </script>
 
 <template>
-
 	<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
 		<a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="#/">WASAText</a>
 		<button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,23 +40,52 @@ export default {}
 				<div class="position-sticky pt-3 sidebar-sticky">
 					<ul class="nav flex-column">
 						<li class="nav-item">
-							<RouterLink to="/session" class="nav-link">
-								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#home"/></svg>
-								Home
-							</RouterLink>
+							<div v-if="userId">
+								<RouterLink :to="'/mainpage/' + userId + '/conversations'" class="nav-link">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#home"/></svg>
+									Home
+								</RouterLink>
+							</div>
+
+							<div v-else>
+								<RouterLink to="/session" class="nav-link">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#home"/></svg>
+									Home
+								</RouterLink>
+							</div>
+
 						</li>
+
 						<li class="nav-item">
-							<RouterLink to="/link1" class="nav-link">
+							<RouterLink to="/users" class="nav-link">
 								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#layout"/></svg>
-								Menu item 1
+								Users List
 							</RouterLink>
 						</li>
+
 						<li class="nav-item">
-							<RouterLink to="'/mainpage'+'/:id'" class="nav-link">
+							<div v-if="userId">
+								<RouterLink :to="'/mainpage/' + userId" class="nav-link">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#key"/></svg>
+									Settings
+								</RouterLink>
+							</div>
+
+							<div v-else>
+								<RouterLink to="/session" class="nav-link">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#key"/></svg>
+									Settings
+								</RouterLink>
+							</div>
+						</li>
+
+						<li class="nav-item">
+							<RouterLink to="/session" class="nav-link" @click="logout">
 								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#key"/></svg>
-								Menu item 2
+								Log out
 							</RouterLink>
 						</li>
+
 					</ul>
 				</div>
 			</nav>
