@@ -15,12 +15,15 @@ export default {
 			errormsg: null,
 			loading: false,
 			text: null,
+			image: null,
 			groupchat: false,
 			name: null,
 			picture: null,
 			messages: [],
 			members: [],
-			showSettingsModal: false
+			showSettingsModal: false,
+			selectedFile : null,
+			eventSource: null
 		}
 	},
 	methods: {
@@ -33,14 +36,33 @@ export default {
 				this.name = this.conversation.Name;
 				this.groupchat = this.conversation.Groupchat;
 				this.messages = this.conversation.Content;
-				this.picture = this.conversation.Picture;
 				this.members = this.conversation.Members;
+
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
 			this.loading = false;
 		},
+		setupSSE() {
+			this.eventSource = new EventSource('http://localhost:3000/sse');
+
+			this.eventSource.onmessage = (event) => {
+				const data = JSON.parse(event.data);
+				if (data.action === 'refresh') {
+					console.log('Refresh triggered by server');
+					this.refresh();
+				}
+			};
+
+			this.eventSource.onerror = () => {
+				console.log('SSE error, reconnecting...');
+				this.eventSource.close();
+				setTimeout(() => this.setupSSE(), 3000);
+			};},
 		async sendMessage(text){
+			if (this.image!= null){
+				text = text+this.image
+			}
 			try{
 				await this.$axios.post(this.path, {content: text});
 				this.showModal = false
@@ -56,11 +78,34 @@ export default {
 		async saveSettings(){
 			this.showSettingsModal=false;
 			await this.refresh()
-		}
-	},
+		},
+
+
+		async onFileChanged (event) {
+			this.selectedFile = event.target.files[0]
+			let base64 = await this.fileToBase64(this.selectedFile)
+			this.selectedFile=base64
+			this.image=this.selectedFile
+		},
+		fileToBase64(file) {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = () => resolve(reader.result);
+				reader.onerror = (error) => reject(error);
+
+				reader.readAsDataURL(file);
+			});
+		},},
+
 	mounted() {
 		this.refresh()
+		this.setupSSE()
+	},
+	beforeDestroy() {
+		if (this.eventSource) {
+			this.eventSource.close();
 	}
+}
 }
 </script>
 
@@ -86,7 +131,7 @@ export default {
 
 	<header class="chatname">
 		{{name}}
-
+		<img :src="picture" class="img" alt="chatPicture"> <br>
 	</header>
 
 
@@ -107,6 +152,7 @@ export default {
 			<span class="close" @click="showModal = false">&times;</span>
 			<p>Send a new message:</p>
 			<input v-model="text" placeholder="text" />
+			<input type="file" @change="onFileChanged">
 			<button @click="sendMessage(text)">CONFIRM</button>
 		</div>
 	</div>

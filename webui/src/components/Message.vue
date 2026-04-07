@@ -17,7 +17,9 @@ export default {
 			message: null,
 			showMessageModal: false,
 			comments : [],
-			emojis:[]
+			emojis:[],
+			text: null,
+			image: null
 		}
 	},methods: {
 		async refresh() {
@@ -27,6 +29,11 @@ export default {
 			try {
 				let response = await this.$axios.get(`${this.path}//${this.messageId}`);
 				this.message = response.data;
+				let str = this.message.Content;
+				let parts = str.split('data:image');
+				this.text = parts[0]
+				if (parts[1]){
+				this.image = 'data:image' + parts[1]}
 				response = await this.$axios.get(`${this.path}//${this.messageId}/comments`);
 				this.comments = response.data;
 				for (let i = 0; i < this.comments.length; i++) {
@@ -46,7 +53,6 @@ export default {
 		},
 		async emoji(id){
 			let response =await this.$axios.get(`${this.path}//${this.messageId}/comments/${id}`);
-			console.log(response.data.Content)
 			return response.data.Content
 		}
 	},
@@ -59,7 +65,10 @@ export default {
 <template>
 	<button class = "message" @click="showMessageModal = true">
 		{{message?.Sender}}<br>
-		{{message?.Content}}<br>
+		{{text}}<br>
+		<div v-if="image != null">
+			<img :src="image" class="img" alt="messagePicture"> <br>
+		</div>
 		{{message?.Timestamp}}<br>
 		{{message?.Status}}<br>
 		<div v-for="emoji in emojis.slice(-3)">

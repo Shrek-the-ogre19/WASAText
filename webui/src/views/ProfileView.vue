@@ -14,7 +14,8 @@ export default {
 			newUsername: null,
 			newPicture: null,
 			showUsernameModal: false,
-			showPictureModal: false
+			showPictureModal: false,
+			selectedFile: null
 		}
 	},
 	methods: {
@@ -44,20 +45,29 @@ export default {
 				this.errormsg = e.toString();
 			}
 		},
-
-		async changePicture(newItem) {
-			if (!newItem) {
-				this.errormsg = 'Picture URL cannot be empty';
-				return;
-			}
-
+		async onFileChanged (event) {
+			this.selectedFile = event.target.files[0]
+			let base64 = await this.fileToBase64(this.selectedFile)
+			this.selectedFile=base64
 			try {
-				await this.$axios.put(this.path + "/settings/picture", {photo: newItem});
+				await this.$axios.put(this.path + "/settings/picture", {photo: this.selectedFile});
 				await this.refresh();
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
-		},},
+
+
+		},
+		fileToBase64(file) {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+
+				reader.onload = () => resolve(reader.result);
+				reader.onerror = (error) => reject(error);
+
+				reader.readAsDataURL(file);
+			});
+			},},
 		mounted() {
 			this.refresh()
 		}
@@ -73,16 +83,19 @@ export default {
 			@save="changeName"
 		/>
 
-		<ReplacingButton
-			item-name="Picture"
-			:item="user?.Picture"
-			@save="changePicture"
-		/>
+
 	</div>
+	<img :src="user?.Picture" class="img" alt="userPicture"> <br>
+	<input type="file" @change="onFileChanged">
 
 
 
 </template>
 
 <style scoped>
+img {
+	height: 200px;
+	width: 200px;
+	border-radius: 50%;
+}
 </style>

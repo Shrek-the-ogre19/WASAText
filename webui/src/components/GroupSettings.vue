@@ -63,22 +63,30 @@ export default {
 				this.errormsg = e.toString();
 			}
 		},
-
-		async changePicture(newItem) {
-			if (!newItem || newItem.trim() === '') {
-				this.errormsg = 'Group picture cannot be empty';
-				return;
-			}
-
+		async onFileChanged (event) {
+			this.selectedFile = event.target.files[0]
+			let base64 = await this.fileToBase64(this.selectedFile)
+			this.selectedFile=base64
 			try {
-				await this.$axios.put(this.path + "/conversationsettings/grouppicture", {name: newItem});
+				await this.$axios.put(this.path + "/conversationsettings/grouppicture", {picture: this.selectedFile});
 				await this.refresh();
 				this.save()
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
+
+
 		},
-	},
+		fileToBase64(file) {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+
+				reader.onload = () => resolve(reader.result);
+				reader.onerror = (error) => reject(error);
+
+				reader.readAsDataURL(file);
+			});
+		},},
 	mounted() {
 		this.refresh()
 	}
@@ -95,11 +103,8 @@ export default {
 				:item="name"
 				@save="changeName"
 			/>
-			<ReplacingButton
-				item-name="Group Picture"
-				:item="picture"
-				@save="changePicture"
-			/>
+			<img :src="picture" class="img" alt="chatPicture"> <br>
+			<input type="file" @change="onFileChanged">
 
 
 			<h2>Members:</h2>

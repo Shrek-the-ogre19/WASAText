@@ -180,5 +180,6 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 
 	var messageId database.MessageId
 	messageId, err = rt.db.CreateMessage(userId, conversationId, content)
+	BroadcastRefresh()
 	json.NewEncoder(w).Encode(messageId)
 }

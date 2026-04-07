@@ -20,6 +20,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/mainpage/:Id/users", rt.getUsers)
 	rt.router.PUT("/mainpage/:Id/settings/name", rt.setMyUserName)
 	rt.router.PUT("/mainpage/:Id/settings/picture", rt.setMyPhoto)
+	rt.router.GET("/sse", SSEHandler)
 
 	rt.router.GET("/mainpage/:Id/conversations", rt.getMyConversations)
 	rt.router.POST("/mainpage/:Id/conversations", rt.startNewConversation)
