@@ -8,6 +8,7 @@ COPY webui/ .
 
 RUN corepack enable
 
+
 RUN yarn run build-prod
 
 FROM nginx:stable
