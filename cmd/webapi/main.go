@@ -34,9 +34,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/globaltime"
+	"github.com/Shrek-the-ogre19/WASAText/service/api"
+	"github.com/Shrek-the-ogre19/WASAText/service/database"
+	"github.com/Shrek-the-ogre19/WASAText/service/globaltime"
 	"github.com/ardanlabs/conf"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"

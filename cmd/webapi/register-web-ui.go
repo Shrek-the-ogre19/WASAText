@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/webui"
+	"github.com/Shrek-the-ogre19/WASAText/webui"
 	"io/fs"
 	"net/http"
 	"strings"

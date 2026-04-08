@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
+	"github.com/Shrek-the-ogre19/WASAText/service/database"
 	"github.com/julienschmidt/httprouter"
 )
 
