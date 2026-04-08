@@ -2,106 +2,118 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-var (
-	clients   = make(map[chan []byte]bool)
-	clientsMu sync.RWMutex
-)
+var clients = make(map[chan string]bool)
+var register = make(chan chan string)
+var unregister = make(chan chan string)
+var broadcast = make(chan string)
 
-func BroadcastRefresh() {
-	msg := []byte(`{"action": "refresh"}`)
-
-	clientsMu.RLock()
-	defer clientsMu.RUnlock()
-
-	for clientChan := range clients {
+func broadcaster() {
+	log.Println("Broadcaster started")
+	for {
 		select {
-		case clientChan <- msg:
-		default:
+		case client := <-register:
+			log.Printf("Registering new client. Total before: %d", len(clients))
+			clients[client] = true
+			log.Printf("Total clients after: %d", len(clients))
+
+		case client := <-unregister:
+			log.Printf("Unregistering client. Total before: %d", len(clients))
+			if _, ok := clients[client]; ok {
+				delete(clients, client)
+				close(client) // Close the channel to signal the handler
+				log.Printf("Client removed. Total after: %d", len(clients))
+			}
+
+		case message := <-broadcast:
+			log.Printf("Broadcasting message: %q to %d clients", message, len(clients))
+			for client := range clients {
+				// ALWAYS use a select with a small timeout, never default
+				select {
+				case client <- message:
+					log.Printf("Message sent to client")
+				case <-time.After(1 * time.Second):
+					// Client is slow, but don't remove it immediately
+					log.Printf("Client slow, skipping this message")
+				}
+			}
 		}
 	}
 }
 
-func SSEHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Println("📡 New SSE client connecting...")
-
-	// Set CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Accept")
-
-	// Handle preflight OPTIONS request
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// Set SSE required headers
+func (rt *_router) sseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	// Check if flusher is available
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		http.Error(w, "SSE not supported", http.StatusInternalServerError)
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 		return
 	}
 
-	// Create a UNIQUE channel for THIS client (using chan string)
-	clientChan := make(chan []byte, 10)
+	// Create buffered channel
+	messageChan := make(chan string, 10)
 
-	// Register this client in the global map
-	clientsMu.Lock()
-	clients[clientChan] = true
-	clientsMu.Unlock()
+	// Register the client FIRST
+	register <- messageChan
+	log.Println("SSE: Client registered")
 
-	// Cleanup when client disconnects
+	// Wait a moment for registration to complete
+	time.Sleep(10 * time.Millisecond)
+
+	// Send initial comment
+	if _, err := fmt.Fprintf(w, ": connected\n\n"); err != nil {
+		log.Printf("SSE: Failed to write initial data: %v", err)
+		return
+	}
+	flusher.Flush()
+	log.Println("SSE: Initial data sent")
+
+	// Cleanup
 	defer func() {
-		clientsMu.Lock()
-		delete(clients, clientChan)
-		clientsMu.Unlock()
-		close(clientChan)
-		fmt.Println("👋 Client disconnected. Total clients:", len(clients))
+		log.Println("SSE: Defer unregister")
+		unregister <- messageChan
 	}()
 
-	// Send initial connection success message
-	fmt.Fprintf(w, "event: connected\n")
-	fmt.Fprintf(w, "data: {\"status\":\"connected\"}\n\n")
-	flusher.Flush()
-	fmt.Println("✅ Initial message sent. Total clients:", len(clients))
-
-	// Send keep-alive ping every 15 seconds to prevent timeout
-	pingTicker := time.NewTicker(15 * time.Second)
-	defer pingTicker.Stop()
-
-	// Main event loop - keeps connection open for THIS client
+	// Main loop
 	for {
 		select {
-		case msg := <-clientChan:
-			// Send broadcast message to THIS client
-			fmt.Fprintf(w, "event: message\n")
-			fmt.Fprintf(w, "data: %s\n\n", msg)
+		case message, ok := <-messageChan:
+			if !ok {
+				log.Println("SSE: Channel closed")
+				return
+			}
+			log.Printf("SSE: Sending message: %s", message)
+			if _, err := fmt.Fprintf(w, "data: %s\n\n", message); err != nil {
+				log.Printf("SSE: Error writing: %v", err)
+				return
+			}
 			flusher.Flush()
-			fmt.Println("📤 Message sent to client")
-
-		case <-pingTicker.C:
-			// Send a comment (ping) to keep connection alive
-			fmt.Fprintf(w, ": ping\n\n")
-			flusher.Flush()
-			fmt.Println("💓 Keep-alive ping sent")
+			log.Println("SSE: Message sent")
 
 		case <-r.Context().Done():
-			// Client disconnected
-			fmt.Println("❌ Client context cancelled")
+			log.Printf("SSE: Context done, client disconnected: %v", r.Context().Err())
 			return
 		}
 	}
+}
+
+func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	message := r.URL.Query().Get("message")
+	if message == "" {
+		message = "Hello from server!"
+	}
+
+	// Broadcast to all clients
+	broadcast <- message
+
+	w.Write([]byte("Message sent to all clients: " + message))
 }

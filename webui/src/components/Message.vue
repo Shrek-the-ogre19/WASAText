@@ -19,7 +19,8 @@ export default {
 			comments : [],
 			emojis:[],
 			text: null,
-			image: null
+			image: null,
+			senderName: null
 		}
 	},methods: {
 		async refresh() {
@@ -29,6 +30,9 @@ export default {
 			try {
 				let response = await this.$axios.get(`${this.path}//${this.messageId}`);
 				this.message = response.data;
+				response = await this.$axios.get(`/mainpage/0/users/${this.sender.Id}`)
+				this.senderName = response.data.Name
+				console.log(this.senderName)
 				let str = this.message.Content;
 				let parts = str.split('data:image');
 				this.text = parts[0]

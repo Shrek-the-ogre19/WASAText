@@ -32,9 +32,6 @@ export default {
 			}
 			this.loading = false;
 		},
-		async openConversation(conversationId){
-			this.$router.push(`${this.path}/${conversationId}`)
-		},
 		async startConversation(receivers) {
 			try {
 				this.conversationId = (await this.$axios.post(this.path, {receivers: receivers})).data.Id;

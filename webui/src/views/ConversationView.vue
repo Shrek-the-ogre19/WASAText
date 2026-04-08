@@ -18,9 +18,9 @@ export default {
 			image: null,
 			groupchat: false,
 			name: null,
-			picture: null,
 			messages: [],
 			members: [],
+			picture: null,
 			showSettingsModal: false,
 			selectedFile : null,
 			eventSource: null
@@ -37,6 +37,10 @@ export default {
 				this.groupchat = this.conversation.Groupchat;
 				this.messages = this.conversation.Content;
 				this.members = this.conversation.Members;
+				this.picture = this.conversation.Picture
+
+				let result = path.substring(0, path.lastIndexOf('/'))
+				this.picture = await this.$axios.get(result)
 
 			} catch (e) {
 				this.errormsg = e.toString();
@@ -44,21 +48,15 @@ export default {
 			this.loading = false;
 		},
 		setupSSE() {
-			this.eventSource = new EventSource('http://localhost:3000/sse');
-
-			this.eventSource.onmessage = (event) => {
-				const data = JSON.parse(event.data);
-				if (data.action === 'refresh') {
-					console.log('Refresh triggered by server');
-					this.refresh();
-				}
+			try{this.eventSource = new EventSource('http://localhost:3000/sse')}catch(e){}
+			this.eventSource.onmessage = function(event) {
+				console.log("idk")
 			};
 
-			this.eventSource.onerror = () => {
-				console.log('SSE error, reconnecting...');
-				this.eventSource.close();
-				setTimeout(() => this.setupSSE(), 3000);
-			};},
+			this.eventSource.onerror = function(error) {
+				console.log("vaa")
+			};
+		},
 		async sendMessage(text){
 			if (this.image!= null){
 				text = text+this.image
@@ -69,6 +67,7 @@ export default {
 			}catch(e){
 				this.errormsg = e.toString();
 			}
+			this.text = null
 		},
 		async openSettings(){
 			if (this.groupchat == true){
@@ -99,13 +98,9 @@ export default {
 
 	mounted() {
 		this.refresh()
-		this.setupSSE()
-	},
-	beforeDestroy() {
-		if (this.eventSource) {
-			this.eventSource.close();
+		//this.setupSSE()
 	}
-}
+
 }
 </script>
 

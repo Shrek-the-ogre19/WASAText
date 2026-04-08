@@ -15,12 +15,18 @@ func (rt *_router) Handler() http.Handler {
 
 	// Routes
 	rt.router.POST("/session", rt.doLogin)
+	//rt.router.GET("/sse", rt.sseHandler)
+	rt.router.GET("/send", rt.sendMessageHandler)
 
-	//rt.router.GET("/mainpage/:Id/users/specificUser", rt.getSpecificUser)
+	// Handle sending a message
+
+	// Start the broadcaster goroutine
+	go broadcaster()
+
+	rt.router.GET("/mainpage/:Id/users/:specificId", rt.getSpecificUser)
 	rt.router.GET("/mainpage/:Id/users", rt.getUsers)
 	rt.router.PUT("/mainpage/:Id/settings/name", rt.setMyUserName)
 	rt.router.PUT("/mainpage/:Id/settings/picture", rt.setMyPhoto)
-	rt.router.GET("/sse", SSEHandler)
 
 	rt.router.GET("/mainpage/:Id/conversations", rt.getMyConversations)
 	rt.router.POST("/mainpage/:Id/conversations", rt.startNewConversation)
@@ -47,5 +53,15 @@ func (rt *_router) Handler() http.Handler {
 
 	rt.router.GET("/mainpage/:Id", rt.getSelf)
 
-	return rt.router
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if this is an SSE request
+		if r.URL.Path == "/sse" {
+			// Handle SSE directly, bypassing httprouter
+			rt.sseHandler(w, r, nil)
+			return
+		}
+		// All other requests go through httprouter
+		rt.router.ServeHTTP(w, r)
+	})
+
 }

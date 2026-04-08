@@ -25,6 +25,9 @@ export default {
 			try {
 				let response = await this.$axios.get(this.path);
 				this.user = response.data;
+				console.log(this.path)
+				response = await this.$axios.get("/mainpage/0/users/1")
+				console.log(response.data)
 			} catch (e) {
 				this.errormsg = e.toString();
 			}

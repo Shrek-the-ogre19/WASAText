@@ -8,7 +8,7 @@ export default {
 		showModal: Boolean,
 		name: String,
 		picture: String,
-		path: String
+		path: String,
 
 	},
 	emits: ['close', 'save'],

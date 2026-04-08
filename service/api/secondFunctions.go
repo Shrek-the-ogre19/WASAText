@@ -92,6 +92,19 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 	receivers := strings.Split(receiversst, ",")
 
 	var conversationId database.ConversationId
+	for _, receiver := range receivers {
+		exists, err := rt.db.UserLookup(receiver)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if exists == false {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Println("user doesn't exist")
+			return
+		}
+	}
+
 	if len(receivers) == 1 {
 		conversationId, err = rt.db.CheckIfInConversation(database.UserId{userId}, receivers[0])
 		if err != nil {
@@ -147,6 +160,29 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 					err = rt.db.UpdateStatus(conversation.Content[i])
 				}
 			}
+			if conversation.Groupchat == false {
+				var members []string
+				members, err = rt.db.GetAllMembers(conversation.Id)
+				var memberid database.UserId
+				memberid, err = rt.db.GetUserId(members[0])
+
+				if memberid == userId {
+					var receiverId database.UserId
+					receiverId, err = rt.db.GetUserId(members[1])
+					var receiver database.User
+					receiver, err = rt.db.GetUser(receiverId)
+					conversation.Picture = receiver.Picture
+					conversation.Name = receiver.Name
+				} else {
+
+					var receiverId database.UserId
+					receiverId, err = rt.db.GetUserId(members[0])
+					var receiver database.User
+					receiver, err = rt.db.GetUser(receiverId)
+					conversation.Picture = receiver.Picture
+					conversation.Name = receiver.Name
+				}
+			}
 			json.NewEncoder(w).Encode(conversation)
 		}
 	}
@@ -180,6 +216,6 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 
 	var messageId database.MessageId
 	messageId, err = rt.db.CreateMessage(userId, conversationId, content)
-	BroadcastRefresh()
+
 	json.NewEncoder(w).Encode(messageId)
 }
