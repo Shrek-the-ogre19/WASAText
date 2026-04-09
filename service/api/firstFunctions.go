@@ -117,6 +117,15 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 	err = json.NewDecoder(r.Body).Decode(&requestData)
 	var name string = requestData.Name
 
+	users, err := rt.db.ListAllUsers()
+	for _, user := range users {
+		// Reject duplicate usernames owned by other users.
+		if user == name {
+			http.Error(w, `{"error":"username already exists"}`, http.StatusBadRequest)
+			return
+		}
+	}
+
 	var id database.UserId = database.UserId{userId}
 	rt.db.ChangeUserName(id, name)
 }

@@ -1,8 +1,10 @@
 <script>
 import ReplacingButton from "../components/ReplacingButton.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
 
 export default {
 	components:{
+		ErrorMsg,
 		ReplacingButton
 	},
 	data: function() {
@@ -43,7 +45,7 @@ export default {
 				await this.$axios.put(this.path + "/settings/name", {name: newItem});
 				await this.refresh();
 			} catch (e) {
-				this.errormsg = e.toString();
+				this.errormsg = "Username already exists";
 			}
 		},
 		async onFileChanged (event) {
@@ -77,6 +79,11 @@ export default {
 </script>
 
 <template>
+	<div v-if="errormsg">
+		<ErrorMsg
+			:msg = "errormsg"
+		/>
+	</div>
 	<div class="profile">
 		<div class="name">
 		<ReplacingButton

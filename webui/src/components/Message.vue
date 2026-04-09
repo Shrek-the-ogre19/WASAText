@@ -18,6 +18,7 @@ export default {
 			showMessageModal: false,
 			comments : [],
 			emojis:[],
+			emojiSenderNames: {},
 			text: null,
 			image: null,
 			senderName: null,
@@ -28,6 +29,7 @@ export default {
 			this.loading = true;
 			this.errormsg = null;
 			this.emojis=[]
+			this.emojiSenderNames = {}
 			try {
 				let response = await this.$axios.get(`${this.path}//${this.messageId}`);
 				this.message = response.data;
@@ -46,10 +48,20 @@ export default {
 				}
 				response = await this.$axios.get(`${this.path}//${this.messageId}/comments`);
 				this.comments = response.data;
+				const senderCache = {};
 				for (let i = 0; i < this.comments.length; i++) {
 					let id = this.comments[i].Id;
 					response =await this.$axios.get(`${this.path}//${this.messageId}/comments/${id}`);
-					this.emojis.push(response.data)
+					const emoji = response.data;
+					this.emojis.push(emoji)
+					const senderId = emoji.User?.Id ?? emoji.User;
+					if (senderId !== undefined && senderId !== null) {
+						if (!senderCache[senderId]) {
+							const senderResponse = await this.$axios.get(`/mainpage/0/users/${senderId}`);
+							senderCache[senderId] = senderResponse.data.Name;
+						}
+						this.emojiSenderNames[emoji.Id] = senderCache[senderId];
+					}
 				}
 
 			} catch (e) {
@@ -92,7 +104,8 @@ export default {
 
 				<!-- Bottom part: Status and Timestamp -->
 				<div class="message-footer">
-					<div v-if="message?.Status=='sent'">
+					<div v-if="received"></div>
+					<div v-else-if="message?.Status=='sent'">
 						<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#check"/></svg>
 					</div>
 					<div v-else>
@@ -105,7 +118,8 @@ export default {
 
 				<!-- Emojis -->
 				<div v-if="emojis.length" class="message-emojis">
-					<div v-for="emoji in emojis.slice(-3)" :key="emoji.Id" class="emoji">
+					<div v-for="emoji in emojis" :key="emoji.Id" class="emoji">
+						<div class="emoji-sender">{{ emojiSenderNames[emoji.Id] || "Unknown" }}</div>
 						{{ emoji.Content }}
 					</div>
 				</div>
@@ -244,7 +258,12 @@ export default {
 	transition: all 0.2s;
 	background-color: rgba(0, 0, 0, 0.05);
 }
-
+.emoji-sender {
+	font-size: 11px;
+	font-weight: 600;
+	color: #495057;
+	margin-bottom: 2px;
+}
 .emoji:hover {
 	transform: scale(1.1);
 	background-color: rgba(0, 0, 0, 0.1);

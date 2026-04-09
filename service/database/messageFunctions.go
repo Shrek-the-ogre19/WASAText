@@ -86,7 +86,7 @@ func (db *appdbimpl) ForwardMessage(userId UserId, messageId MessageId, conversa
 	var snippet string
 	var senderName string
 	var user User
-	text := message.Content
+	text := "FORWARDED: " + message.Content
 	senderId := userId
 
 	_, err = db.c.Exec("INSERT INTO messages (id, status, content, comments, timestamp, senderId, conversationId) VALUES (?, ?, ?, ?, ?, ?, ?)", id+1, status, text, comments, timestamp, senderId.Id, conversationId.Id)

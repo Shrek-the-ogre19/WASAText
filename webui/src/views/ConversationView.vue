@@ -115,8 +115,12 @@ export default {
 	</div>
 
 	<header class="chatname">
-
+		<div v-if="picture == 'default'">
+			<img src="/default-avatar-icon-of-social-media-user-vector.jpg" class="img" alt="chatPicture"/>
+		</div>
+		<div v-else>
 		<img :src="picture" class="img" alt="chatPicture">
+		</div>
 		{{name}}
 	</header>
 
