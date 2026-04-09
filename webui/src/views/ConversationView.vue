@@ -14,7 +14,7 @@ export default {
 			showModal: false,
 			errormsg: null,
 			loading: false,
-			text: null,
+			text: "",
 			image: null,
 			groupchat: false,
 			name: null,
@@ -34,7 +34,7 @@ export default {
 				this.conversation = response.data;
 				this.name = this.conversation.Name;
 				this.groupchat = this.conversation.Groupchat;
-				this.messages = this.conversation.Content;
+				this.messages = this.conversation.Content.reverse()
 				this.members = this.conversation.Members;
 				this.picture = this.conversation.Picture
 
@@ -115,19 +115,23 @@ export default {
 	</div>
 
 	<header class="chatname">
+
+		<img :src="picture" class="img" alt="chatPicture">
 		{{name}}
-		<img :src="picture" class="img" alt="chatPicture"> <br>
 	</header>
 
 
-
-	<li v-for="message in messages">
+	<br>
+	<br>
+	<br>
+	<br>
+	<div v-for="message in messages">
 		<Message
 			:path=path
 			:messageId=message.Id
 			@save="refresh()"
 		/>
-	</li>
+	</div>
 
 	<div class = "bottom">
 			<button @click="showModal = true">+</button>
@@ -227,5 +231,87 @@ export default {
 .bottom {
 	position: fixed;
 	bottom: 0;
+}
+.chatname {
+	position: fixed;
+	top: 45px;
+	left: 220px;
+	right: 0;
+	z-index: 1000;
+
+	/* Layout */
+	display: flex;
+	align-items: center;
+	gap: 12px;
+
+	/* Styling */
+	padding: 12px 20px;
+	background-color: forestgreen;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	border-bottom: 1px solid #e9ecef;
+
+	/* Text styling */
+	font-size: 30px;
+	font-weight: 600;
+	color: #212529;
+}
+
+.img {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 2px solid #ffffff;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	flex-shrink: 0;
+}
+body {
+	padding-top: 70px;
+}
+.bottom {
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	z-index: 1000;
+}
+
+.bottom button {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	background-color: #28a745;
+	color: white;
+	border: none;
+	cursor: pointer;
+	font-size: 32px;
+	font-weight: bold;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bottom button:hover {
+	background-color: #218838;
+	transform: scale(1.1);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+.settings {
+	position: fixed;
+	top: 45px;
+	right: 20px;
+	z-index: 9999;
+
+	/* Button styling */
+	padding: 10px 16px;
+	background-color: #0d6efd;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: all 0.3s ease;
 }
 </style>

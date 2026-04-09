@@ -60,7 +60,6 @@ func (rt *_router) getSelf(w http.ResponseWriter, r *http.Request, ps httprouter
 
 func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
-	fmt.Println("in function")
 	//userId, err := strconv.Atoi(ps.ByName("Id"))
 	//if err != nil {
 	//	w.WriteHeader(http.StatusBadRequest)
@@ -89,7 +88,6 @@ func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 	var user database.User
-	fmt.Println("getting user", id)
 	user, err = rt.db.GetUser(database.UserId{id})
 	if err != nil {
 		fmt.Println("function getUser failed")

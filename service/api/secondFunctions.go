@@ -100,7 +100,6 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 		}
 		if exists == false {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Println("user doesn't exist")
 			return
 		}
 	}
@@ -109,7 +108,6 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 		if err != nil {
 			fmt.Println("error in function CheckIfInConversation")
 		}
-		fmt.Println(conversationId)
 		if conversationId.Id != 0 {
 			json.NewEncoder(w).Encode(conversationId)
 		} else {

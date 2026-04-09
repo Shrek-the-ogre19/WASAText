@@ -25,7 +25,6 @@ export default {
 		async uncomment(id){
 			await this.$axios.delete(`${this.path}/comments/${id}`)
 			this.showEmojiModal = false
-			console.log("uncommenting",id)
 			this.save()
 		},
 		async forwardMessage(receiver){

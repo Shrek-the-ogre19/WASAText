@@ -32,13 +32,13 @@ export default{
 
 <template>
 	<h1>Log in / Sign up</h1>
-	<input v-model="username" />
+	<input v-model="username" placeholder="username" class="input"/>
+	<br>
 	<p>
-		<button @click="login(username)">Log in</button>
+		<button @click="login(username)" class="button">Log in</button>
 	</p>
 
 </template>
 
 <style scoped>
-
 </style>

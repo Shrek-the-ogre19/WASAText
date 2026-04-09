@@ -25,9 +25,7 @@ export default {
 			try {
 				let response = await this.$axios.get(this.path);
 				this.user = response.data;
-				console.log(this.path)
 				response = await this.$axios.get("/mainpage/0/users/1")
-				console.log(response.data)
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
@@ -79,26 +77,64 @@ export default {
 </script>
 
 <template>
-	<div>
+	<div class="profile">
+		<div class="name">
 		<ReplacingButton
 			item-name="Username"
 			:item="user?.Name"
 			@save="changeName"
 		/>
+		</div>
 
-
+<div class="picture">
+	<div v-if="user?.Picture=='default'">
+		<img src="/default-avatar-icon-of-social-media-user-vector.jpg" class="img" alt="userPicture"/>
 	</div>
+		<div v-else>
 	<img :src="user?.Picture" class="img" alt="userPicture"> <br>
+	</div>
 	<input type="file" @change="onFileChanged">
+</div>
+	</div>
 
 
 
 </template>
 
 <style scoped>
-img {
+.img {
 	height: 200px;
 	width: 200px;
 	border-radius: 50%;
+}
+.profile {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 20px;
+}
+
+.name:deep(.mainButton) {
+	flex: 1;
+	font-size: 30px;
+	color: #e9ecef;
+	background-color: #2c3034;
+	padding: 12px 20px;
+	margin: 8px 0;
+	border-radius: 8px;
+	border-left: 4px solid #0d6efd;
+	transition: all 0.3s ease;
+	list-style: none;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+.name:deep(.mainButton:hover) {
+	background-color: #3a3f44;
+	transform: translateX(5px);
+	border-left-color: #0dcaf0;
+}
+.picture {
+	display: flex;
+	align-items: center;
+	gap: 15px;
 }
 </style>

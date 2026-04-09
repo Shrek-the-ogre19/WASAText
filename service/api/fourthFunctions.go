@@ -44,7 +44,6 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 	err := json.NewDecoder(r.Body).Decode(&requestData)
 	var newconversation string = requestData.Conversation
 
-	fmt.Println("in wanted function", newconversation)
 	messageIdint, err := strconv.Atoi(ps.ByName("messageId"))
 	messageId := database.MessageId{messageIdint}
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
@@ -58,7 +57,7 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 		var conversation database.Conversation
 		conversation, err = rt.db.GetConversation(conversations[i])
 		if conversation.Name == newconversation || conversation.Members[0] == newuserId || conversation.Members[1] == newuserId {
-			fmt.Println(userId, messageId, conversations[i])
+
 			err = rt.db.ForwardMessage(userId, messageId, conversations[i])
 			break
 		}

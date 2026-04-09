@@ -58,7 +58,7 @@ export default {
 
 						<li class="nav-item">
 							<RouterLink to="/users" class="nav-link">
-								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#layout"/></svg>
+								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#list"/></svg>
 								Users List
 							</RouterLink>
 						</li>
@@ -66,14 +66,14 @@ export default {
 						<li class="nav-item">
 							<div v-if="userId">
 								<RouterLink :to="'/mainpage/' + userId" class="nav-link">
-									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#key"/></svg>
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#settings"/></svg>
 									Settings
 								</RouterLink>
 							</div>
 
 							<div v-else>
 								<RouterLink to="/session" class="nav-link">
-									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#key"/></svg>
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#settings"/></svg>
 									Settings
 								</RouterLink>
 							</div>
@@ -81,7 +81,7 @@ export default {
 
 						<li class="nav-item">
 							<RouterLink to="/session" class="nav-link" @click="logout">
-								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#key"/></svg>
+								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#log-out"/></svg>
 								Log out
 							</RouterLink>
 						</li>

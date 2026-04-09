@@ -33,14 +33,14 @@ export default {
 
 <template>
 	<p>
-		<button class="button" @click="showModal = true">{{item}}</button>
+		<button class="mainButton" @click="showModal = true">{{item}}</button>
 	</p>
 
 	<div v-if="showModal" class="modal">
 		<div class="modal-content">
 			<span class="close" @click="showModal = false">&times;</span>
 			<input v-model="newItem" :placeholder="text" />
-			<button @click="save">CONFIRM</button>
+			<button class="button" @click="save">CONFIRM</button>
 		</div>
 	</div>
 </template>

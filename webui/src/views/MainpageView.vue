@@ -26,7 +26,7 @@ export default {
 			this.errormsg = null;
 			try {
 				let response = await this.$axios.get(this.path);
-				this.conversations = response.data;
+				this.conversations = response.data.reverse()
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
@@ -60,16 +60,21 @@ export default {
 			<button @click="startConversation(receivers)">CONFIRM</button>
 		</div>
 	</div>
-	<li v-for="conversation in conversations">
+	<div v-for="conversation in conversations" class="conversation">
 		<ConversationHead
 			:path=path
 			:conversation="conversation"
 		/>
-	</li>
+	</div>
 
 </template>
 
 <style scoped>
+.conversation {
+	width: 900px;
+	height: 120px;
+	overflow: auto;
+}
 .modal {
 	position: fixed;
 	z-index: 1000;
@@ -139,4 +144,27 @@ export default {
 	background-color: #ffeeee;
 	border-radius: 4px;
 }
+.button {
+	position: fixed;
+	top: 70px;
+	left: 220px;
+	z-index: 1000;
+
+	/* Button styling */
+	padding: 10px 20px;
+	background-color: forestgreen;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 16px;
+	font-weight: 500;
+	transition: all 0.3s ease;
+}
+
+.button:hover {
+	background-color: darkgreen;
+	transform: scale(1.05);
+}
+
 </style>
