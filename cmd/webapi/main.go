@@ -39,7 +39,7 @@ import (
 	"github.com/Shrek-the-ogre19/WASAText/service/globaltime"
 	"github.com/ardanlabs/conf"
 	"github.com/sirupsen/logrus"
-	"modernc.org/sqlite"
+	_ "modernc.org/sqlite"
 )
 
 // main is the program entry point. The only purpose of this function is to call run() and set the exit code if there is
