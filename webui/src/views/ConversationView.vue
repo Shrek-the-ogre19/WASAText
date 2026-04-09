@@ -23,7 +23,6 @@ export default {
 			picture: null,
 			showSettingsModal: false,
 			selectedFile : null,
-			eventSource: null
 		}
 	},
 	methods: {
@@ -47,16 +46,7 @@ export default {
 			}
 			this.loading = false;
 		},
-		setupSSE() {
-			try{this.eventSource = new EventSource('http://localhost:3000/sse')}catch(e){}
-			this.eventSource.onmessage = function(event) {
-				console.log("idk")
-			};
 
-			this.eventSource.onerror = function(error) {
-				console.log("vaa")
-			};
-		},
 		async sendMessage(text){
 			if (this.image!= null){
 				text = text+this.image
@@ -98,7 +88,7 @@ export default {
 
 	mounted() {
 		this.refresh()
-		//this.setupSSE()
+
 	}
 
 }

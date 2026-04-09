@@ -89,6 +89,7 @@ func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 	var user database.User
+	fmt.Println("getting user", id)
 	user, err = rt.db.GetUser(database.UserId{id})
 	if err != nil {
 		fmt.Println("function getUser failed")

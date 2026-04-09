@@ -44,17 +44,21 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 	err := json.NewDecoder(r.Body).Decode(&requestData)
 	var newconversation string = requestData.Conversation
 
+	fmt.Println("in wanted function", newconversation)
 	messageIdint, err := strconv.Atoi(ps.ByName("messageId"))
 	messageId := database.MessageId{messageIdint}
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
 	var userId = database.UserId{userIdint}
 	var conversations []database.ConversationId
 	conversations, err = rt.db.GetConversations(userId)
+	var newuserId database.UserId
+	newuserId, err = rt.db.GetUserId(newconversation)
 
 	for i := 0; i < len(conversations); i++ {
 		var conversation database.Conversation
 		conversation, err = rt.db.GetConversation(conversations[i])
-		if conversation.Name == newconversation {
+		if conversation.Name == newconversation || conversation.Members[0] == newuserId || conversation.Members[1] == newuserId {
+			fmt.Println(userId, messageId, conversations[i])
 			err = rt.db.ForwardMessage(userId, messageId, conversations[i])
 			break
 		}
@@ -98,6 +102,18 @@ func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps htt
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
 	var userId = database.UserId{userIdint}
 	var commentId database.CommentId
+	var comments []database.CommentId
+	var message database.Message
+	message, err = rt.db.GetMessage(messageId)
+	comments = message.Comments
+	for i := 0; i < len(comments); i++ {
+		var comment database.Comment
+		comment, err = rt.db.GetComment(comments[i])
+		if userId == comment.User {
+			return
+		}
+	}
+
 	commentId, err = rt.db.CreateComment(userId, messageId, newComment)
 	json.NewEncoder(w).Encode(commentId)
 	if err != nil {

@@ -104,7 +104,6 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 	}
-
 	if len(receivers) == 1 {
 		conversationId, err = rt.db.CheckIfInConversation(database.UserId{userId}, receivers[0])
 		if err != nil {

@@ -15,13 +15,10 @@ func (rt *_router) Handler() http.Handler {
 
 	// Routes
 	rt.router.POST("/session", rt.doLogin)
-	//rt.router.GET("/sse", rt.sseHandler)
-	rt.router.GET("/send", rt.sendMessageHandler)
 
 	// Handle sending a message
 
 	// Start the broadcaster goroutine
-	go broadcaster()
 
 	rt.router.GET("/mainpage/:Id/users/:specificId", rt.getSpecificUser)
 	rt.router.GET("/mainpage/:Id/users", rt.getUsers)
@@ -53,15 +50,6 @@ func (rt *_router) Handler() http.Handler {
 
 	rt.router.GET("/mainpage/:Id", rt.getSelf)
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if this is an SSE request
-		if r.URL.Path == "/sse" {
-			// Handle SSE directly, bypassing httprouter
-			rt.sseHandler(w, r, nil)
-			return
-		}
-		// All other requests go through httprouter
-		rt.router.ServeHTTP(w, r)
-	})
+	return rt.router
 
 }
