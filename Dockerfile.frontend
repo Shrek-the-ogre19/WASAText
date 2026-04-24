@@ -8,7 +8,7 @@ COPY webui/package.json webui/yarn.lock ./
 
 COPY webui/ .
 
-
+RUN yarn install
 
 RUN yarn run build-prod
 
