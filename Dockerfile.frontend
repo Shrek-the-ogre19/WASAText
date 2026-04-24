@@ -2,11 +2,12 @@ FROM node:lts AS builder
 
 WORKDIR /app/webui
 
+RUN corepack enable
+
 COPY webui/package.json webui/yarn.lock ./
 
 COPY webui/ .
 
-RUN corepack enable && corepack prepare yarn@4.5.0 --activate
 
 
 RUN yarn run build-prod
