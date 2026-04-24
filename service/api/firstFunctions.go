@@ -127,7 +127,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	var id database.UserId = database.UserId{userId}
-	rt.db.ChangeUserName(id, name)
+	err = rt.db.ChangeUserName(id, name)
 }
 
 func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -153,5 +153,5 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 	var picture string = requestData.Picture
 
 	var id database.UserId = database.UserId{userId}
-	rt.db.ChangeUserPicture(id, picture)
+	err = rt.db.ChangeUserPicture(id, picture)
 }

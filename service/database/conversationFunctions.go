@@ -68,7 +68,7 @@ func (db *appdbimpl) StartConversation(sender UserId, receivers []string) (Conve
 
 	var membersId []UserId = ConvertUsers(members)
 	for i := 0; i < len(membersId); i++ {
-		db.AddConversations(membersId[i], id+1)
+		err = db.AddConversations(membersId[i], id+1)
 
 	}
 

@@ -56,12 +56,10 @@ components:
           format: binary
         name:
           description: name of the sender, username or group name
-          oneOf:
-            - $ref: "#/components/schemas/user/properties/name"
-            - type: string
+          type: string
         picture:
           description: picture of the user or group
-          $ref: "#/components/schemas/user/properties/picture"
+          type: string
         date:
           description: time when the last message was sent
           type: string
@@ -71,7 +69,7 @@ components:
           description: content of the  conversation
           type: array
           items:
-            $ref: "#/components/schemas/message"
+            type: integer
         groupchat:
           description: if it is group or not
           type: boolean
@@ -110,7 +108,7 @@ components:
           description: emoticon
         user:
           description: user who added the comment
-          $ref: "#/components/schemas/user/properties/name"
+          type: integer
   parameters:
     userId:
       description: identifier for the user
@@ -234,6 +232,11 @@ paths:
                 $ref: "#/components/schemas/user"
         "404":
           description: user not found
+          content:
+            application/json:
+              schema:
+                type: integer
+                enum: [ 0 ]
 
 
   /mainpage/{Id}/settings/name:
@@ -329,6 +332,11 @@ paths:
                 $ref: "#/components/schemas/conversation"
         "404":
           description: conversation not found
+          content:
+            application/json:
+              schema:
+                type: integer
+                enum: [ 0 ]
     post:
       operationId: sendMessage
       description: send a new message
@@ -407,6 +415,11 @@ paths:
                 $ref: "#/components/schemas/message"
         "404":
           description: message not found
+          content:
+            application/json:
+              schema:
+                type: integer
+                enum: [ 0 ]
     post:
       operationId: forwardMessage
       description: forward the message to other conversation
@@ -478,6 +491,11 @@ paths:
                 $ref: "#/components/schemas/comment"
         "404":
           description: comment not found
+          content:
+            application/json:
+              schema:
+                type: integer
+                enum: [ 0 ]
     delete:
       operationId: uncommentMessage
       description: delete my comment
