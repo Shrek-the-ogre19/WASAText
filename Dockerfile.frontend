@@ -6,9 +6,9 @@ RUN corepack enable && corepack prepare yarn@4.5.0 --activate
 
 COPY webui/package.json webui/yarn.lock ./
 
-COPY webui/ .
-
 RUN yarn install
+
+COPY webui/ .
 
 RUN yarn run build-prod
 
