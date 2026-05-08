@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"fmt"
 	"strconv"
 
 	"github.com/Shrek-the-ogre19/WASAText/service/database"
@@ -14,28 +13,38 @@ import (
 func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
 	var id database.UserId
-	//var name string = r.URL.Query().Get("name")
 	var requestData struct {
 		Name string `json:"name"`
 	}
 	err := json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	var name string = requestData.Name
 
 	exists, err := rt.db.UserLookup(name)
 	if err != nil {
-		fmt.Println("error in function UserLookup")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if exists == false {
 		err = rt.db.AddUser(name)
 		if err != nil {
-			fmt.Println("error in function AddUser")
+			w.WriteHeader(http.StatusBadGateway)
+			return
 		}
 	}
 	id, err = rt.db.GetUserId(name)
 	if err != nil {
-		fmt.Println("error in function GetUserId")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
-	json.NewEncoder(w).Encode(id.Id)
+	err = json.NewEncoder(w).Encode(id.Id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 
 }
 
@@ -48,36 +57,37 @@ func (rt *_router) getSelf(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 	count, err := rt.db.CountUsers()
 	if err != nil {
-		fmt.Println("error in function CountUsers")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if userId < 0 || userId > count {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	user, err := rt.db.GetUser(database.UserId{userId})
-	json.NewEncoder(w).Encode(user)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
 
 func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
-	//userId, err := strconv.Atoi(ps.ByName("Id"))
-	//if err != nil {
-	//	w.WriteHeader(http.StatusBadRequest)
-	//	return
-	//}
-	//count, err := rt.db.CountUsers()
-	//if err != nil {
-	//	fmt.Println("error in function CountUsers")
-	//}
-	//if userId < 0 || userId > count {
-	//	w.WriteHeader(http.StatusNotFound)
-	//	return
-	//}
 	users, err := rt.db.ListAllUsers()
 	if err != nil {
-		fmt.Println("error in function ListAllUsers")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
-	json.NewEncoder(w).Encode(users)
+	err = json.NewEncoder(w).Encode(users)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
 
 func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -90,9 +100,14 @@ func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps ht
 	var user database.User
 	user, err = rt.db.GetUser(database.UserId{id})
 	if err != nil {
-		fmt.Println("function getUser failed")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
-	json.NewEncoder(w).Encode(user)
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
 
 func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -104,7 +119,8 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 	}
 	count, err := rt.db.CountUsers()
 	if err != nil {
-		fmt.Println("error in function CountUsers")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if userId < 0 || userId > count {
 		w.WriteHeader(http.StatusNotFound)
@@ -115,9 +131,17 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		Name string `json:"name"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	var name string = requestData.Name
 
 	users, err := rt.db.ListAllUsers()
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	for _, user := range users {
 		// Reject duplicate usernames owned by other users.
 		if user == name {
@@ -128,6 +152,10 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 
 	var id database.UserId = database.UserId{userId}
 	err = rt.db.ChangeUserName(id, name)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
 
 func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -139,7 +167,8 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 	count, err := rt.db.CountUsers()
 	if err != nil {
-		fmt.Println("error in function CountUsers")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if userId < 0 || userId > count {
 		w.WriteHeader(http.StatusNotFound)
@@ -150,8 +179,16 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		Picture string `json:"photo"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	var picture string = requestData.Picture
 
 	var id database.UserId = database.UserId{userId}
 	err = rt.db.ChangeUserPicture(id, picture)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }

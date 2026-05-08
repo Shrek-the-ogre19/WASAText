@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,7 +19,8 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 	}
 	count, err := rt.db.CountUsers()
 	if err != nil {
-		fmt.Println("error in function CountUsers")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if userId < 0 || userId > count {
 		w.WriteHeader(http.StatusNotFound)
@@ -28,32 +28,61 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 	}
 	var conversationIds []database.ConversationId
 	conversationIds, err = rt.db.GetConversations(database.UserId{userId})
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	var conversations []database.Conversation
 	for i := 0; i < len(conversationIds); i++ {
 		var toAdd database.Conversation
 		toAdd, err = rt.db.GetConversation(conversationIds[i])
 		if err != nil {
-			fmt.Println("error in function GetConversation")
+			w.WriteHeader(http.StatusBadGateway)
+			return
 		}
 		if toAdd.Groupchat == false {
 			var members []string
 			members, err = rt.db.GetAllMembers(conversationIds[i])
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
 			var memberid database.UserId
 			memberid, err = rt.db.GetUserId(members[0])
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
 
 			if memberid.Id == userId {
 				var receiverId database.UserId
 				receiverId, err = rt.db.GetUserId(members[1])
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
+				}
 				var receiver database.User
 				receiver, err = rt.db.GetUser(receiverId)
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
+				}
 				toAdd.Picture = receiver.Picture
 				toAdd.Name = receiver.Name
 			} else {
 
 				var receiverId database.UserId
 				receiverId, err = rt.db.GetUserId(members[0])
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
+				}
 				var receiver database.User
 				receiver, err = rt.db.GetUser(receiverId)
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
+				}
 				toAdd.Picture = receiver.Picture
 				toAdd.Name = receiver.Name
 			}
@@ -63,9 +92,14 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	if err != nil {
-		fmt.Println("error in GetConversations function")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
-	json.NewEncoder(w).Encode(conversations)
+	err = json.NewEncoder(w).Encode(conversations)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
 
 func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -77,7 +111,8 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 	}
 	count, err := rt.db.CountUsers()
 	if err != nil {
-		fmt.Println("error in function CountUsers")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if userId < 0 || userId > count {
 		w.WriteHeader(http.StatusNotFound)
@@ -88,6 +123,10 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 		Receivers string `json:"receivers"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	var receiversst string = requestData.Receivers
 	receivers := strings.Split(receiversst, ",")
 
@@ -95,7 +134,7 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 	for _, receiver := range receivers {
 		exists, err := rt.db.UserLookup(receiver)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadGateway)
 			return
 		}
 		if exists == false {
@@ -106,18 +145,39 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 	if len(receivers) == 1 {
 		conversationId, err = rt.db.CheckIfInConversation(database.UserId{userId}, receivers[0])
 		if err != nil {
-			fmt.Println("error in function CheckIfInConversation")
+			w.WriteHeader(http.StatusBadGateway)
+			return
 		}
 		if conversationId.Id != 0 {
-			json.NewEncoder(w).Encode(conversationId)
+			err = json.NewEncoder(w).Encode(conversationId)
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
 		} else {
 			conversationId, err = rt.db.StartConversation(database.UserId{userId}, receivers)
-			json.NewEncoder(w).Encode(conversationId)
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
+			err = json.NewEncoder(w).Encode(conversationId)
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
 		}
 
 	} else {
 		conversationId, err = rt.db.StartConversation(database.UserId{userId}, receivers)
-		json.NewEncoder(w).Encode(conversationId)
+		if err != nil {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		err = json.NewEncoder(w).Encode(conversationId)
+		if err != nil {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
 	}
 
 }
@@ -125,19 +185,28 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
 	conversationIdint, err := strconv.Atoi(ps.ByName("conversationId"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	var conversationId = database.ConversationId{conversationIdint}
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	var userId = database.UserId{userIdint}
 
 	var userconversations []database.ConversationId
 	userconversations, err = rt.db.GetConversations(userId)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 	count, err := rt.db.CountConversations()
 	if err != nil {
-		fmt.Println("error in function CountConversations")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if conversationIdint < 0 || conversationIdint > count {
 		w.WriteHeader(http.StatusNotFound)
@@ -148,39 +217,77 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 			var conversation database.Conversation
 			conversation, err = rt.db.GetConversation(conversationId)
 			if err != nil {
-				fmt.Println("error in function GetConversation")
+				w.WriteHeader(http.StatusBadGateway)
+				return
 			}
 			for i := 0; i < len(conversation.Content); i++ {
 				var message database.Message
 				message, err = rt.db.GetMessage(conversation.Content[i])
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
+				}
 				if message.Sender != userId && message.Status == "sent" {
 					err = rt.db.UpdateStatus(conversation.Content[i])
+					if err != nil {
+						w.WriteHeader(http.StatusBadGateway)
+						return
+					}
 				}
 			}
 			if conversation.Groupchat == false {
 				var members []string
 				members, err = rt.db.GetAllMembers(conversation.Id)
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
+				}
 				var memberid database.UserId
 				memberid, err = rt.db.GetUserId(members[0])
+				if err != nil {
+					w.WriteHeader(http.StatusBadGateway)
+					return
+				}
 
 				if memberid == userId {
 					var receiverId database.UserId
 					receiverId, err = rt.db.GetUserId(members[1])
+					if err != nil {
+						w.WriteHeader(http.StatusBadGateway)
+						return
+					}
 					var receiver database.User
 					receiver, err = rt.db.GetUser(receiverId)
+					if err != nil {
+						w.WriteHeader(http.StatusBadGateway)
+						return
+					}
 					conversation.Picture = receiver.Picture
 					conversation.Name = receiver.Name
 				} else {
 
 					var receiverId database.UserId
 					receiverId, err = rt.db.GetUserId(members[0])
+					if err != nil {
+						w.WriteHeader(http.StatusBadGateway)
+						return
+					}
 					var receiver database.User
 					receiver, err = rt.db.GetUser(receiverId)
+					if err != nil {
+						w.WriteHeader(http.StatusBadGateway)
+						return
+					}
 					conversation.Picture = receiver.Picture
 					conversation.Name = receiver.Name
 				}
 			}
-			json.NewEncoder(w).Encode(conversation)
+			err = json.NewEncoder(w).Encode(conversation)
+			if err != nil {
+				w.WriteHeader(http.StatusBadGateway)
+				return
+			}
+
 		}
 	}
 
@@ -189,8 +296,16 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
 	conversationIdint, err := strconv.Atoi(ps.ByName("conversationId"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	var conversationId = database.ConversationId{conversationIdint}
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 	var userId = database.UserId{userIdint}
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -198,7 +313,8 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 	count, err := rt.db.CountConversations()
 	if err != nil {
-		fmt.Println("error in function CountConversations")
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 	if conversationIdint < 0 || conversationIdint > count {
 		w.WriteHeader(http.StatusNotFound)
@@ -209,10 +325,22 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 		Content string `json:"content"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	var content string = requestData.Content
 
 	var messageId database.MessageId
 	messageId, err = rt.db.CreateMessage(userId, conversationId, content)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 
-	json.NewEncoder(w).Encode(messageId)
+	err = json.NewEncoder(w).Encode(messageId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
