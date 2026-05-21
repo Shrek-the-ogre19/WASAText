@@ -10,8 +10,7 @@ FROM debian:bookworm
 EXPOSE 3000
 
 WORKDIR /app/
-RUN mkdir -p /app/data
-RUN chmod -R 777 /app/data
+RUN mkdir -p /app/data && chmod -R 777 /app/data
 COPY --from=builder /app/webapi ./
 
-CMD ["sh", "-c", "chmod -R 777 /app/data && /app/webapi"]
+CMD ["/app/webapi"]
