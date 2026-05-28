@@ -1,7 +1,7 @@
 FROM golang:1.25 AS builder
 
 WORKDIR /src/
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=1
 COPY . .
 
 RUN go build -o /app/webapi ./cmd/webapi
