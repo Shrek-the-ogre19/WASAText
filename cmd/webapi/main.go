@@ -32,6 +32,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/Shrek-the-ogre19/WASAText/service/api"
@@ -84,7 +85,21 @@ func run() error {
 	// Start Database
 	logger.Println("initializing database support")
 
-	dbconn, err := sql.Open("sqlite", cfg.DB.Filename)
+	dbPath := cfg.DB.Filename
+	if !filepath.IsAbs(dbPath) {
+		wd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("getting working directory: %w", err)
+		}
+		dbPath = filepath.Join(wd, dbPath)
+	}
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o755); err != nil {
+		logger.WithError(err).Error("error creating database directory")
+		return fmt.Errorf("creating database directory %q: %w", filepath.Dir(dbPath), err)
+	}
+	logger.Infof("using database file %s", dbPath)
+
+	dbconn, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		logger.WithError(err).Error("error opening SQLite DB")
 		return fmt.Errorf("opening SQLite: %w", err)
