@@ -26,43 +26,37 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	var conversationIds []database.ConversationId
-	conversationIds, err = rt.db.GetConversations(database.UserId{userId})
+	conversationIds, err := rt.db.GetConversations(database.UserId{userId})
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 	var conversations []database.Conversation
 	for i := 0; i < len(conversationIds); i++ {
-		var toAdd database.Conversation
-		toAdd, err = rt.db.GetConversation(conversationIds[i])
+		toAdd, err := rt.db.GetConversation(conversationIds[i])
 		if err != nil {
 			w.WriteHeader(http.StatusBadGateway)
 			return
 		}
 		if toAdd.Groupchat == false {
-			var members []string
-			members, err = rt.db.GetAllMembers(conversationIds[i])
+			members, err := rt.db.GetAllMembers(conversationIds[i])
 			if err != nil {
 				w.WriteHeader(http.StatusBadGateway)
 				return
 			}
-			var memberid database.UserId
-			memberid, err = rt.db.GetUserId(members[0])
+			memberid, err := rt.db.GetUserId(members[0])
 			if err != nil {
 				w.WriteHeader(http.StatusBadGateway)
 				return
 			}
 
 			if memberid.Id == userId {
-				var receiverId database.UserId
-				receiverId, err = rt.db.GetUserId(members[1])
+				receiverId, err := rt.db.GetUserId(members[1])
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
 					return
 				}
-				var receiver database.User
-				receiver, err = rt.db.GetUser(receiverId)
+				receiver, err := rt.db.GetUser(receiverId)
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
 					return
@@ -70,15 +64,12 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 				toAdd.Picture = receiver.Picture
 				toAdd.Name = receiver.Name
 			} else {
-
-				var receiverId database.UserId
-				receiverId, err = rt.db.GetUserId(members[0])
+				receiverId, err := rt.db.GetUserId(members[0])
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
 					return
 				}
-				var receiver database.User
-				receiver, err = rt.db.GetUser(receiverId)
+				receiver, err := rt.db.GetUser(receiverId)
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
 					return
@@ -91,10 +82,6 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 
 	}
 
-	if err != nil {
-		w.WriteHeader(http.StatusBadGateway)
-		return
-	}
 	err = json.NewEncoder(w).Encode(conversations)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
@@ -127,8 +114,7 @@ func (rt *_router) startNewConversation(w http.ResponseWriter, r *http.Request, 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var receiversst string = requestData.Receivers
-	receivers := strings.Split(receiversst, ",")
+	receivers := strings.Split(requestData.Receivers, ",")
 
 	var conversationId database.ConversationId
 	for _, receiver := range receivers {
@@ -189,16 +175,15 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversationId = database.ConversationId{conversationIdint}
+	conversationId := database.ConversationId{conversationIdint}
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var userId = database.UserId{userIdint}
+	userId := database.UserId{userIdint}
 
-	var userconversations []database.ConversationId
-	userconversations, err = rt.db.GetConversations(userId)
+	userconversations, err := rt.db.GetConversations(userId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
@@ -214,15 +199,13 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 	}
 	for i := 0; i < len(userconversations); i++ {
 		if userconversations[i] == conversationId {
-			var conversation database.Conversation
-			conversation, err = rt.db.GetConversation(conversationId)
+			conversation, err := rt.db.GetConversation(conversationId)
 			if err != nil {
 				w.WriteHeader(http.StatusBadGateway)
 				return
 			}
 			for i := 0; i < len(conversation.Content); i++ {
-				var message database.Message
-				message, err = rt.db.GetMessage(conversation.Content[i])
+				message, err := rt.db.GetMessage(conversation.Content[i])
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
 					return
@@ -236,28 +219,24 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 				}
 			}
 			if conversation.Groupchat == false {
-				var members []string
-				members, err = rt.db.GetAllMembers(conversation.Id)
+				members, err := rt.db.GetAllMembers(conversation.Id)
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
 					return
 				}
-				var memberid database.UserId
-				memberid, err = rt.db.GetUserId(members[0])
+				memberid, err := rt.db.GetUserId(members[0])
 				if err != nil {
 					w.WriteHeader(http.StatusBadGateway)
 					return
 				}
 
 				if memberid == userId {
-					var receiverId database.UserId
-					receiverId, err = rt.db.GetUserId(members[1])
+					receiverId, err := rt.db.GetUserId(members[1])
 					if err != nil {
 						w.WriteHeader(http.StatusBadGateway)
 						return
 					}
-					var receiver database.User
-					receiver, err = rt.db.GetUser(receiverId)
+					receiver, err := rt.db.GetUser(receiverId)
 					if err != nil {
 						w.WriteHeader(http.StatusBadGateway)
 						return
@@ -265,15 +244,12 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 					conversation.Picture = receiver.Picture
 					conversation.Name = receiver.Name
 				} else {
-
-					var receiverId database.UserId
-					receiverId, err = rt.db.GetUserId(members[0])
+					receiverId, err := rt.db.GetUserId(members[0])
 					if err != nil {
 						w.WriteHeader(http.StatusBadGateway)
 						return
 					}
-					var receiver database.User
-					receiver, err = rt.db.GetUser(receiverId)
+					receiver, err := rt.db.GetUser(receiverId)
 					if err != nil {
 						w.WriteHeader(http.StatusBadGateway)
 						return
@@ -300,17 +276,13 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversationId = database.ConversationId{conversationIdint}
+	conversationId := database.ConversationId{conversationIdint}
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var userId = database.UserId{userIdint}
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	userId := database.UserId{userIdint}
 	count, err := rt.db.CountConversations()
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
@@ -329,10 +301,7 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var content string = requestData.Content
-
-	var messageId database.MessageId
-	messageId, err = rt.db.CreateMessage(userId, conversationId, content)
+	messageId, err := rt.db.CreateMessage(userId, conversationId, requestData.Content)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return

@@ -18,23 +18,20 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var newname string = requestData.Newname
-
 	conversationIdint, err := strconv.Atoi(ps.ByName("conversationId"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversationId = database.ConversationId{conversationIdint}
+	conversationId := database.ConversationId{conversationIdint}
 
-	var groupchat bool
-	groupchat, err = rt.db.CheckGroupchat(conversationId)
+	groupchat, err := rt.db.CheckGroupchat(conversationId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 	if groupchat {
-		err = rt.db.ChangeConversationName(conversationId, newname)
+		err = rt.db.ChangeConversationName(conversationId, requestData.Newname)
 		if err != nil {
 			w.WriteHeader(http.StatusBadGateway)
 			return
@@ -53,23 +50,20 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var newpicture string = requestData.Newpicture
-
 	conversationIdint, err := strconv.Atoi(ps.ByName("conversationId"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversationId = database.ConversationId{conversationIdint}
+	conversationId := database.ConversationId{conversationIdint}
 
-	var groupchat bool
-	groupchat, err = rt.db.CheckGroupchat(conversationId)
+	groupchat, err := rt.db.CheckGroupchat(conversationId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 	if groupchat {
-		err = rt.db.ChangeConversationPhoto(conversationId, newpicture)
+		err = rt.db.ChangeConversationPhoto(conversationId, requestData.Newpicture)
 		if err != nil {
 			w.WriteHeader(http.StatusBadGateway)
 			return
@@ -86,17 +80,15 @@ func (rt *_router) listGroupMembers(w http.ResponseWriter, r *http.Request, ps h
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversationId = database.ConversationId{conversationIdint}
+	conversationId := database.ConversationId{conversationIdint}
 
-	var groupchat bool
-	groupchat, err = rt.db.CheckGroupchat(conversationId)
+	groupchat, err := rt.db.CheckGroupchat(conversationId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 	if groupchat {
-		var members []string
-		members, err = rt.db.GetAllMembers(conversationId)
+		members, err := rt.db.GetAllMembers(conversationId)
 		if err != nil {
 			w.WriteHeader(http.StatusBadGateway)
 			return
@@ -117,16 +109,14 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversationId = database.ConversationId{conversationIdint}
-	var groupchat bool
-	groupchat, err = rt.db.CheckGroupchat(conversationId)
+	conversationId := database.ConversationId{conversationIdint}
+	groupchat, err := rt.db.CheckGroupchat(conversationId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 	if groupchat {
-		var members []string
-		members, err = rt.db.GetAllMembers(conversationId)
+		members, err := rt.db.GetAllMembers(conversationId)
 		if err != nil {
 			w.WriteHeader(http.StatusBadGateway)
 			return
@@ -139,7 +129,7 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		var memberToAdd string = requestData.Name
+		memberToAdd := requestData.Name
 
 		for i := 0; i < len(members); i++ {
 			if memberToAdd == members[i] {
@@ -147,8 +137,11 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 				break
 			}
 		}
-		var users []string
-		users, err = rt.db.ListAllUsers()
+		users, err := rt.db.ListAllUsers()
+		if err != nil {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
 		for i := 0; i < len(users); i++ {
 			if memberToAdd == users[i] {
 				err = rt.db.AddMembers(conversationId, memberToAdd)
@@ -173,15 +166,14 @@ func (rt *_router) leaveGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversationId = database.ConversationId{conversationIdint}
+	conversationId := database.ConversationId{conversationIdint}
 	userIdint, err := strconv.Atoi(ps.ByName("Id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var userId = database.UserId{userIdint}
-	var groupchat bool
-	groupchat, err = rt.db.CheckGroupchat(conversationId)
+	userId := database.UserId{userIdint}
+	groupchat, err := rt.db.CheckGroupchat(conversationId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return

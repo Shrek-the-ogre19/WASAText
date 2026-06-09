@@ -16,30 +16,31 @@ func (db *appdbimpl) CountMessages() (int, error) {
 
 func (db *appdbimpl) CreateMessage(senderId UserId, conversationId ConversationId, text string) (MessageId, error) {
 	id, err := db.CountMessages()
-	var status = "sent"
-	var content = text
-	var comments = ""
-	var timestamp = time.Now().String()
-	var snippet string
-	var senderName string
-	var user User
+	if err != nil {
+		return MessageId{}, err
+	}
+	status := "sent"
+	timestamp := time.Now().String()
 
-	_, err = db.c.Exec("INSERT INTO messages (id, status, content, comments, timestamp, senderId, conversationId) VALUES (?, ?, ?, ?, ?, ?, ?)", id+1, status, content, comments, timestamp, senderId.Id, conversationId.Id)
+	_, err = db.c.Exec("INSERT INTO messages (id, status, content, comments, timestamp, senderId, conversationId) VALUES (?, ?, ?, ?, ?, ?, ?)", id+1, status, text, "", timestamp, senderId.Id, conversationId.Id)
+	if err != nil {
+		return MessageId{}, err
+	}
 	err = db.UpdateContent(conversationId, id+1)
 	if err == nil {
-		user, err = db.GetUser(senderId)
-		senderName = user.Name
-		//For snippet we cut username to 6 characters and text to 30
-		if len(senderName) > 6 {
-			senderName = senderName[:6] + "..."
+		user, userErr := db.GetUser(senderId)
+		if userErr == nil {
+			senderName := user.Name
+			//For snippet we cut username to 6 characters and text to 30
+			if len(senderName) > 6 {
+				senderName = senderName[:6] + "..."
+			}
+			snippet := senderName + ": " + text
+			db.UpdateConversationHead(conversationId, snippet, timestamp)
 		}
-		snippet = senderName + ": " + text
-
-		db.UpdateConversationHead(conversationId, snippet, timestamp)
 	}
 
-	var messageId = MessageId{id + 1}
-	return messageId, err
+	return MessageId{id + 1}, err
 }
 
 func (db *appdbimpl) GetMessage(id MessageId) (Message, error) {
@@ -77,33 +78,38 @@ WHERE id = ?;`, newstatus, id.Id)
 
 func (db *appdbimpl) ForwardMessage(userId UserId, messageId MessageId, conversationId ConversationId) error {
 	id, err := db.CountMessages()
-	var status = "sent"
-	var comments = ""
-	var timestamp = time.Now().String()
+	if err != nil {
+		return err
+	}
+	status := "sent"
+	timestamp := time.Now().String()
 
-	var message Message
-	message, err = db.GetMessage(messageId)
-	var snippet string
-	var senderName string
-	var user User
+	message, err := db.GetMessage(messageId)
+	if err != nil {
+		return err
+	}
 	text := "FORWARDED: " + message.Content
-	senderId := userId
 
-	_, err = db.c.Exec("INSERT INTO messages (id, status, content, comments, timestamp, senderId, conversationId) VALUES (?, ?, ?, ?, ?, ?, ?)", id+1, status, text, comments, timestamp, senderId.Id, conversationId.Id)
+	_, err = db.c.Exec("INSERT INTO messages (id, status, content, comments, timestamp, senderId, conversationId) VALUES (?, ?, ?, ?, ?, ?, ?)", id+1, status, text, "", timestamp, userId.Id, conversationId.Id)
+	if err != nil {
+		return err
+	}
 	err = db.UpdateContent(conversationId, id+1)
 	if err == nil {
-		user, err = db.GetUser(senderId)
-		senderName = user.Name
-		//For snippet we cut username to 6 characters and text to 30
-		if len(senderName) > 6 {
-			senderName = senderName[:6] + "..."
+		user, userErr := db.GetUser(userId)
+		if userErr == nil {
+			senderName := user.Name
+			//For snippet we cut username to 6 characters and text to 30
+			if len(senderName) > 6 {
+				senderName = senderName[:6] + "..."
+			}
+			snippetText := text
+			if len(snippetText) > 30 {
+				snippetText = snippetText[:30] + "..."
+			}
+			snippet := senderName + " :  " + snippetText
+			db.UpdateConversationHead(conversationId, snippet, timestamp)
 		}
-		if len(text) > 30 {
-			text = text[:30] + "..."
-		}
-		snippet = senderName + " :  " + text
-
-		db.UpdateConversationHead(conversationId, snippet, timestamp)
 	}
 	return err
 }
@@ -132,6 +138,9 @@ func (db *appdbimpl) GetComments(id MessageId) ([]CommentId, error) {
 func (db *appdbimpl) AddCommentToMessage(messageId MessageId, newCommentId CommentId) error {
 	var commentsR string
 	err := db.c.QueryRow("SELECT  comments FROM messages WHERE id = ?", messageId.Id).Scan(&commentsR)
+	if err != nil {
+		return err
+	}
 	commentsR = commentsR + "," + strconv.Itoa(newCommentId.Id)
 
 	_, err = db.c.Exec(`UPDATE messages
@@ -143,6 +152,9 @@ WHERE id = ?;`, commentsR, messageId.Id)
 func (db *appdbimpl) RemoveCommentFromMessage(messageId MessageId, oldCommentId CommentId) error {
 	var commentsR string
 	err := db.c.QueryRow("SELECT  comments FROM messages WHERE id = ?", messageId.Id).Scan(&commentsR)
+	if err != nil {
+		return err
+	}
 	comments := ConvertComments(commentsR)
 	var newcomments string
 	for i := 0; i < len(comments); i++ {

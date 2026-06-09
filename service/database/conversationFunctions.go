@@ -25,15 +25,20 @@ func (db *appdbimpl) CountConversations() (int, error) {
 
 func (db *appdbimpl) StartConversation(sender UserId, receivers []string) (ConversationId, error) {
 	id, err := db.CountConversations()
-	var snippet string = ""
+	if err != nil {
+		return ConversationId{}, err
+	}
+	var snippet string
 	var groupchat bool
-	var content = ""
+	content := ""
 	var members string
 	var picture string
-	var name string = ""
-	var date = time.Now().String()
-	var senderO User
-	senderO, err = db.GetUser(sender)
+	var name string
+	date := time.Now().String()
+	senderO, err := db.GetUser(sender)
+	if err != nil {
+		return ConversationId{}, err
+	}
 	senderName := senderO.Name
 	senderIdstr := strconv.Itoa(sender.Id)
 	if len(receivers) == 1 {
@@ -50,11 +55,9 @@ func (db *appdbimpl) StartConversation(sender UserId, receivers []string) (Conve
 	} else {
 		groupchat = true
 
-		var size int
-		size = len(receivers)
 		name = senderName
 		members = senderIdstr
-		for i := 0; i < size; i++ {
+		for i := 0; i < len(receivers); i++ {
 			receiverId, err := db.GetUserId(receivers[i])
 			if err == nil {
 				receiverIdstr := strconv.Itoa(receiverId.Id)
@@ -66,15 +69,15 @@ func (db *appdbimpl) StartConversation(sender UserId, receivers []string) (Conve
 		picture = "default"
 	}
 
-	var membersId []UserId = ConvertUsers(members)
+	membersId := ConvertUsers(members)
 	for i := 0; i < len(membersId); i++ {
-		err = db.AddConversations(membersId[i], id+1)
-
+		if err = db.AddConversations(membersId[i], id+1); err != nil {
+			return ConversationId{}, err
+		}
 	}
 
 	_, err = db.c.Exec("INSERT INTO conversations (id, snippet, name, picture, date, content, groupchat, members) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", id+1, snippet, name, picture, date, content, groupchat, members)
-	var conversationId = ConversationId{id + 1}
-	return conversationId, err
+	return ConversationId{id + 1}, err
 }
 
 func (db *appdbimpl) GetConversation(id ConversationId) (Conversation, error) {
@@ -141,20 +144,29 @@ func (db *appdbimpl) GetAllMembers(id ConversationId) ([]string, error) {
 }
 
 func (db *appdbimpl) AddMembers(id ConversationId, Name string) error {
-	var groupchat bool
 	var membersR string
 	err := db.c.QueryRow("SELECT  members FROM conversations WHERE id = ?", id.Id).Scan(&membersR)
-	err = db.c.QueryRow("SELECT  groupchat FROM conversations WHERE id = ?", id.Id).Scan(&groupchat)
-	var newUserId UserId
-	newUserId, err = db.GetUserId(Name)
+	if err != nil {
+		return err
+	}
+	newUserId, err := db.GetUserId(Name)
+	if err != nil {
+		return err
+	}
 
 	membersR = membersR + "," + strconv.Itoa(newUserId.Id)
 	_, err = db.c.Exec(`UPDATE conversations
 SET members = ?
 WHERE id = ?;`, membersR, id.Id)
+	if err != nil {
+		return err
+	}
 
 	var conversations string
 	err = db.c.QueryRow("SELECT conversations FROM users WHERE id = ?", newUserId.Id).Scan(&conversations)
+	if err != nil {
+		return err
+	}
 	if conversations != "" {
 		conversations = conversations + ","
 	}
@@ -170,6 +182,9 @@ func (db *appdbimpl) LeaveGroup(convid ConversationId, userid UserId) error {
 	var membersR string
 	useridstr := strconv.Itoa(userid.Id)
 	err := db.c.QueryRow("SELECT  members FROM conversations WHERE id = ?", convid.Id).Scan(&membersR)
+	if err != nil {
+		return err
+	}
 	members := strings.Split(membersR, ",")
 	var newmembers string
 	for i := 0; i < len(members); i++ {
@@ -182,10 +197,16 @@ func (db *appdbimpl) LeaveGroup(convid ConversationId, userid UserId) error {
 	_, err = db.c.Exec(`UPDATE conversations
 SET members = ?
 WHERE id = ?;`, newmembers, convid.Id)
+	if err != nil {
+		return err
+	}
 
 	var conversationsR string
 	convidstr := strconv.Itoa(convid.Id)
 	err = db.c.QueryRow("SELECT  conversations FROM users WHERE id = ?", userid.Id).Scan(&conversationsR)
+	if err != nil {
+		return err
+	}
 	conversations := strings.Split(conversationsR, ",")
 	var newconversations string
 	for i := 0; i < len(conversations); i++ {
@@ -221,6 +242,9 @@ WHERE id = ?;`, snippetNew, dateNew, id.Id)
 func (db *appdbimpl) UpdateContent(id ConversationId, newMessageId int) error {
 	var contentR string
 	err := db.c.QueryRow("SELECT  content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
+	if err != nil {
+		return err
+	}
 	contentR = contentR + "," + strconv.Itoa(newMessageId)
 
 	_, err = db.c.Exec(`UPDATE conversations
@@ -232,6 +256,9 @@ WHERE id = ?;`, contentR, id.Id)
 func (db *appdbimpl) RemoveFromContent(id ConversationId, oldMessageId int) error {
 	var contentR string
 	err := db.c.QueryRow("SELECT  content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
+	if err != nil {
+		return err
+	}
 	content := ConvertMessages(contentR)
 	var newcontent string
 	for i := 0; i < len(content); i++ {

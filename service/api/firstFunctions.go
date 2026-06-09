@@ -12,7 +12,6 @@ import (
 
 func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
-	var id database.UserId
 	var requestData struct {
 		Name string `json:"name"`
 	}
@@ -21,7 +20,7 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var name string = requestData.Name
+	name := requestData.Name
 
 	exists, err := rt.db.UserLookup(name)
 	if err != nil {
@@ -35,7 +34,7 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 			return
 		}
 	}
-	id, err = rt.db.GetUserId(name)
+	id, err := rt.db.GetUserId(name)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
@@ -97,8 +96,7 @@ func (rt *_router) getSpecificUser(w http.ResponseWriter, r *http.Request, ps ht
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var user database.User
-	user, err = rt.db.GetUser(database.UserId{id})
+	user, err := rt.db.GetUser(database.UserId{id})
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
@@ -135,7 +133,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var name string = requestData.Name
+	name := requestData.Name
 
 	users, err := rt.db.ListAllUsers()
 	if err != nil {
@@ -150,8 +148,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		}
 	}
 
-	var id database.UserId = database.UserId{userId}
-	err = rt.db.ChangeUserName(id, name)
+	err = rt.db.ChangeUserName(database.UserId{userId}, name)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
@@ -183,10 +180,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var picture string = requestData.Picture
-
-	var id database.UserId = database.UserId{userId}
-	err = rt.db.ChangeUserPicture(id, picture)
+	err = rt.db.ChangeUserPicture(database.UserId{userId}, requestData.Picture)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return

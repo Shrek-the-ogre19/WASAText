@@ -12,9 +12,7 @@ func ConvertConversations(conversationsR string) ([]ConversationId){
 		return conversations
 	}
 	conversations1 := strings.Split(conversationsR, ",")
-	var size int
-	size = len(conversations1)
-	for i := 0; i < size; i++ {
+	for i := 0; i < len(conversations1); i++ {
 		a := conversations1[i]
 		number,err := strconv.Atoi(a)
 		var id ConversationId
@@ -36,9 +34,7 @@ func ConvertUsers(usersR string) ([]UserId){
 		usersR = usersR[1:]
 	}
 	users1 := strings.Split(usersR, ",")
-	var size int
-	size = len(users1)
-	for i := 0; i < size; i++ {
+	for i := 0; i < len(users1); i++ {
 		a := users1[i]
 		number,err := strconv.Atoi(a)
 		var id UserId
@@ -57,9 +53,7 @@ func ConvertMessages(messagesR string) ([]MessageId){
 	}
 	messagesR = messagesR[1:]
 	messages1 := strings.Split(messagesR, ",")
-	var size int
-	size = len(messages1)
-	for i := 0; i < size; i++ {
+	for i := 0; i < len(messages1); i++ {
 		a := messages1[i]
 		number,err := strconv.Atoi(a)
 		var id MessageId
@@ -79,9 +73,7 @@ func ConvertComments(commentsR string) ([]CommentId){
 	}
 	commentsR = commentsR[1:]
 	comments1 := strings.Split(commentsR, ",")
-	var size int
-	size = len(comments1)
-	for i := 0; i < size; i++ {
+	for i := 0; i < len(comments1); i++ {
 		a := comments1[i]
 		number,err := strconv.Atoi(a)
 		var id CommentId

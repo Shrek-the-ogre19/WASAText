@@ -11,6 +11,9 @@ func (db *appdbimpl) CountComments() (int, error) {
 
 func (db *appdbimpl) CreateComment(userId UserId, messageId MessageId, content string) (CommentId, error) {
 	id, err := db.CountComments()
+	if err != nil {
+		return CommentId{}, err
+	}
 	_, err = db.c.Exec("INSERT INTO comments (id, content, user, message) VALUES (?, ?, ?, ?)", id+1, content, userId.Id, messageId.Id)
 	if err == nil {
 		err = db.AddCommentToMessage(messageId, CommentId{id + 1})

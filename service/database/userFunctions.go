@@ -13,9 +13,10 @@ func (db *appdbimpl) CountUsers() (int, error) {
 
 func (db *appdbimpl) AddUser(name string) error {
 	id, err := db.CountUsers()
-	var picture = "default"
-	var conversations string
-	_, err = db.c.Exec("INSERT INTO users (id, name, picture, conversations) VALUES (?, ?, ?, ?)", id+1, name, picture, conversations)
+	if err != nil {
+		return err
+	}
+	_, err = db.c.Exec("INSERT INTO users (id, name, picture, conversations) VALUES (?, ?, ?, ?)", id+1, name, "default", "")
 	return err
 }
 
@@ -36,8 +37,7 @@ WHERE id = ?;`, picture, id.Id)
 func (db *appdbimpl) GetUserId(name string) (UserId, error) {
 	var id int
 	err := db.c.QueryRow("SELECT id FROM users WHERE name = ?", name).Scan(&id)
-	var UserId = UserId{id}
-	return UserId, err
+	return UserId{id}, err
 }
 
 func (db *appdbimpl) GetUser(id UserId) (User, error) {
@@ -80,6 +80,9 @@ func (db *appdbimpl) UserLookup(name string) (bool, error) {
 func (db *appdbimpl) AddConversations(id UserId, newConvId int) error {
 	var conversations string
 	err := db.c.QueryRow("SELECT conversations FROM users WHERE id = ?", id.Id).Scan(&conversations)
+	if err != nil {
+		return err
+	}
 	if conversations != "" {
 		conversations = conversations + ","
 	}
