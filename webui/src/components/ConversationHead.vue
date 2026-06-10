@@ -1,4 +1,10 @@
 <script >
+import {
+	GROUP_DEFAULT_PICTURE,
+	USER_DEFAULT_PICTURE,
+	isDefaultPicture,
+} from "../services/picture.js";
+
 export default{
 	name: 'ConversationHead',
 	props: {
@@ -16,7 +22,7 @@ export default{
 		async refresh() {
 			this.loading = true;
 			this.errormsg = null;
-			let str = this.conversation.Snippet;
+			let str = this.conversation?.Snippet ?? "";
 			let parts = str.split('data:image');
 			if (parts[0]){this.text = parts[0]}
 
@@ -38,14 +44,28 @@ export default{
 	},
 	mounted() {
 		this.refresh()
-	}
+	},
+	computed: {
+		useDefaultPicture() {
+			return isDefaultPicture(this.conversation?.Picture);
+		},
+		groupDefaultPicture() {
+			return GROUP_DEFAULT_PICTURE;
+		},
+		userDefaultPicture() {
+			return USER_DEFAULT_PICTURE;
+		},
+	},
 }
 </script>
 
 <template>
-	<button class = "conversation" @click="openConversation(conversation.Id.Id)">
-		<div v-if="conversation.Picture == 'default'">
-			<img src="/9572728.png" class="img" alt="conversationPicture"/>
+	<button class = "conversation" @click="openConversation(conversation.Id?.Id ?? conversation.Id)">
+		<div v-if="useDefaultPicture && conversation.Groupchat">
+			<img :src="groupDefaultPicture" class="img" alt="conversationPicture"/>
+		</div>
+		<div v-else-if="useDefaultPicture">
+			<img :src="userDefaultPicture" class="img" alt="conversationPicture"/>
 		</div>
 		<div v-else>
 		<img :src="conversation.Picture" class="img" alt="conversationPicture">

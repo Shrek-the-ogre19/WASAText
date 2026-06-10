@@ -1,5 +1,6 @@
 <script>
 import ReplacingButton from "./ReplacingButton.vue";
+import { GROUP_DEFAULT_PICTURE, isDefaultPicture } from "../services/picture.js";
 
 export default {
 	name: 'GroupSettings',
@@ -89,7 +90,12 @@ export default {
 		},},
 	mounted() {
 		this.refresh()
-	}
+	},
+	computed: {
+		displayPicture() {
+			return isDefaultPicture(this.picture) ? GROUP_DEFAULT_PICTURE : this.picture;
+		},
+	},
 }
 </script>
 
@@ -103,7 +109,7 @@ export default {
 				:item="name"
 				@save="changeName"
 			/>
-			<img :src="picture" class="img" alt="chatPicture"> <br>
+			<img :src="displayPicture" class="img" alt="chatPicture"> <br>
 			<input type="file" @change="onFileChanged">
 
 

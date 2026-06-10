@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 // Handler returns an instance of httprouter.Router that handle APIs registered here
@@ -15,6 +17,9 @@ func (rt *_router) Handler() http.Handler {
 
 	// Routes
 	rt.router.POST("/session", rt.doLogin)
+	rt.router.GET("/users", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		rt.getUsers(w, r, ps)
+	})
 
 	// Handle sending a message
 

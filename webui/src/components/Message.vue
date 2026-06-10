@@ -53,20 +53,21 @@ export default {
 				this.senderName = response.data.Name
 				this.received = Number(mainpageUserId) !== Number(senderId);
 				response = await this.$axios.get(`${this.path}//${this.messageId}/comments`);
-				this.comments = response.data;
+				this.comments = response.data ?? [];
 				const senderCache = {};
 				for (let i = 0; i < this.comments.length; i++) {
-					let id = this.comments[i].Id;
-					response =await this.$axios.get(`${this.path}//${this.messageId}/comments/${id}`);
+					const commentId = this.comments[i].Id?.Id ?? this.comments[i].Id;
+					response = await this.$axios.get(`${this.path}//${this.messageId}/comments/${commentId}`);
 					const emoji = response.data;
 					this.emojis.push(emoji)
 					const emojiSenderId = emoji.User?.Id ?? emoji.User;
+					const emojiId = emoji.Id?.Id ?? emoji.Id;
 					if (emojiSenderId !== undefined && emojiSenderId !== null) {
 						if (!senderCache[emojiSenderId]) {
 							const senderResponse = await this.$axios.get(`/mainpage/${mainpageUserId}/users/${emojiSenderId}`);
 							senderCache[emojiSenderId] = senderResponse.data.Name;
 						}
-						this.emojiSenderNames[emoji.Id] = senderCache[emojiSenderId];
+						this.emojiSenderNames[emojiId] = senderCache[emojiSenderId];
 					}
 				}
 
@@ -133,8 +134,8 @@ export default {
 
 				<!-- Emojis -->
 				<div v-if="emojis.length" class="message-emojis">
-					<div v-for="emoji in emojis" :key="emoji.Id" class="emoji">
-						<div class="emoji-sender">{{ emojiSenderNames[emoji.Id] || "Unknown" }}</div>
+					<div v-for="emoji in emojis" :key="emoji.Id?.Id ?? emoji.Id" class="emoji">
+						<div class="emoji-sender">{{ emojiSenderNames[emoji.Id?.Id ?? emoji.Id] || "Unknown" }}</div>
 						{{ emoji.Content }}
 					</div>
 				</div>

@@ -87,6 +87,9 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
+	if users == nil {
+		users = []string{}
+	}
 	err = json.NewEncoder(w).Encode(users)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)

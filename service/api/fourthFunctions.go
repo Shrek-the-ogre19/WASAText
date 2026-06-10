@@ -236,6 +236,9 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
+	if comments == nil {
+		comments = []database.CommentId{}
+	}
 	err = json.NewEncoder(w).Encode(comments)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)

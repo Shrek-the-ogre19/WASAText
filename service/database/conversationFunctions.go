@@ -48,10 +48,19 @@ func (db *appdbimpl) StartConversation(sender UserId, receivers []string) (Conve
 		if err == nil {
 			receiverIdstr := strconv.Itoa(receiverId.Id)
 			members = senderIdstr + "," + receiverIdstr
+			receiver, receiverErr := db.GetUser(receiverId)
+			if receiverErr == nil {
+				picture = receiver.Picture
+				name = receiver.Name
+			} else {
+				picture = "default"
+				name = receivers[0]
+			}
+		} else {
+			picture = "default"
+			name = receivers[0]
+			members = senderIdstr
 		}
-		name = senderName + "," + receivers[0]
-
-		picture = name
 	} else {
 		groupchat = true
 

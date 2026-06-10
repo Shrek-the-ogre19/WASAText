@@ -9,7 +9,7 @@ export default {
 		return {
 			errormsg: null,
 			loading: false,
-			users: null,
+			users: [],
 			path: this.$route.path,
 			stopAutoRefresh: null,
 		}
@@ -19,9 +19,11 @@ export default {
 			this.loading = true;
 			this.errormsg = null;
 			try {
+				const token = localStorage.getItem("identifier");
 				const userId = localStorage.getItem("id");
-				let response = await this.$axios.get(`/mainpage/${userId}/users`);
-				this.users = response.data;
+				const url = token && userId ? `/mainpage/${userId}/users` : "/users";
+				let response = await this.$axios.get(url);
+				this.users = response.data ?? [];
 			} catch (e) {
 				this.errormsg = e.toString();
 			}

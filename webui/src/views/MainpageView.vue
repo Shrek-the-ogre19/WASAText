@@ -14,7 +14,7 @@ export default {
 			errormsg: null,
 			loading: false,
 			path: this.$route.path,
-			conversations: null,
+			conversations: [],
 			showModal: false,
 			id: null,
 			receivers: null,
@@ -28,7 +28,7 @@ export default {
 			this.errormsg = null;
 			try {
 				let response = await this.$axios.get(this.path);
-				this.conversations = response.data.reverse()
+				this.conversations = [...(response.data ?? [])].reverse()
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
@@ -72,7 +72,7 @@ export default {
 			<button @click="startConversation(receivers)">CONFIRM</button>
 		</div>
 	</div>
-	<div v-for="conversation in conversations" :key="conversation.Id.Id" class="conversation">
+	<div v-for="conversation in conversations" :key="conversation.Id?.Id ?? conversation.Id" class="conversation">
 		<ConversationHead
 			:path=path
 			:conversation="conversation"

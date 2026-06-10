@@ -10,6 +10,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+func normalizeConversation(conversation database.Conversation) database.Conversation {
+	if conversation.Content == nil {
+		conversation.Content = []database.MessageId{}
+	}
+	return conversation
+}
+
 func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("content-type", "application/json")
 	userId, err := strconv.Atoi(ps.ByName("Id"))
@@ -31,7 +38,7 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	var conversations []database.Conversation
+	conversations := []database.Conversation{}
 	for i := 0; i < len(conversationIds); i++ {
 		toAdd, err := rt.db.GetConversation(conversationIds[i])
 		if err != nil {
@@ -78,7 +85,7 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 				toAdd.Name = receiver.Name
 			}
 		}
-		conversations = append(conversations, toAdd)
+		conversations = append(conversations, normalizeConversation(toAdd))
 
 	}
 
@@ -258,7 +265,7 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 					conversation.Name = receiver.Name
 				}
 			}
-			err = json.NewEncoder(w).Encode(conversation)
+			err = json.NewEncoder(w).Encode(normalizeConversation(conversation))
 			if err != nil {
 				w.WriteHeader(http.StatusBadGateway)
 				return

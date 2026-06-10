@@ -3,6 +3,11 @@ import GroupSettings from "../components/GroupSettings.vue";
 import Message from "../components/Message.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
 import { startAutoRefresh } from "../services/refresh.js";
+import {
+	GROUP_DEFAULT_PICTURE,
+	USER_DEFAULT_PICTURE,
+	isDefaultPicture,
+} from "../services/picture.js";
 
 export default {
 	components: {
@@ -37,7 +42,7 @@ export default {
 				this.conversation = response.data;
 				this.name = this.conversation.Name;
 				this.groupchat = this.conversation.Groupchat;
-				this.messages = [...this.conversation.Content].reverse();
+				this.messages = [...(this.conversation.Content ?? [])];
 				this.members = this.conversation.Members;
 				this.picture = this.conversation.Picture;
 			} catch (e) {
@@ -96,6 +101,17 @@ export default {
 			this.stopAutoRefresh();
 		}
 	},
+	computed: {
+		useDefaultPicture() {
+			return isDefaultPicture(this.picture);
+		},
+		groupDefaultPicture() {
+			return GROUP_DEFAULT_PICTURE;
+		},
+		userDefaultPicture() {
+			return USER_DEFAULT_PICTURE;
+		},
+	},
 }
 </script>
 
@@ -123,8 +139,11 @@ export default {
 	</div>
 
 	<header class="chatname">
-		<div v-if="picture == 'default'">
-			<img src="/default-avatar-icon-of-social-media-user-vector.jpg" class="img" alt="chatPicture"/>
+		<div v-if="useDefaultPicture && groupchat">
+			<img :src="groupDefaultPicture" class="img" alt="chatPicture"/>
+		</div>
+		<div v-else-if="useDefaultPicture">
+			<img :src="userDefaultPicture" class="img" alt="chatPicture"/>
 		</div>
 		<div v-else>
 		<img :src="picture" class="img" alt="chatPicture">
@@ -137,10 +156,10 @@ export default {
 	<br>
 	<br>
 	<br>
-	<div v-for="message in messages" :key="message.Id.Id">
+	<div v-for="message in messages" :key="message.Id?.Id ?? message.Id">
 		<Message
 			:path="path"
-			:messageId="message.Id.Id"
+			:messageId="message.Id?.Id ?? message.Id"
 			@save="refresh()"
 		/>
 	</div>
