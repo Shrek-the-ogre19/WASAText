@@ -210,8 +210,8 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 					w.WriteHeader(http.StatusBadGateway)
 					return
 				}
-				if message.Sender != userId && message.Status == "sent" {
-					err = rt.db.UpdateStatus(conversation.Content[i])
+				if message.Sender != userId {
+					err = rt.db.MarkMessageRead(conversation.Content[i], userId)
 					if err != nil {
 						w.WriteHeader(http.StatusBadGateway)
 						return
@@ -264,9 +264,11 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 				return
 			}
 
+			return
 		}
 	}
 
+	w.WriteHeader(http.StatusForbidden)
 }
 
 func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -290,6 +292,16 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 	if conversationIdint < 0 || conversationIdint > count {
 		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	member, err := rt.db.IsConversationMember(conversationId, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	if !member {
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 

@@ -104,6 +104,7 @@ func (rt *_router) listGroupMembers(w http.ResponseWriter, r *http.Request, ps h
 }
 
 func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("content-type", "application/json")
 	conversationIdint, err := strconv.Atoi(ps.ByName("conversationId"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
@@ -115,49 +116,55 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	if groupchat {
-		members, err := rt.db.GetAllMembers(conversationId)
-		if err != nil {
-			w.WriteHeader(http.StatusBadGateway)
-			return
-		}
-		var requestData struct {
-			Name string `json:"name"`
-		}
-		err = json.NewDecoder(r.Body).Decode(&requestData)
-		if err != nil {
+	if !groupchat {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	members, err := rt.db.GetAllMembers(conversationId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	var requestData struct {
+		Name string `json:"name"`
+	}
+	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	memberToAdd := requestData.Name
+
+	for i := 0; i < len(members); i++ {
+		if memberToAdd == members[i] {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		memberToAdd := requestData.Name
-
-		for i := 0; i < len(members); i++ {
-			if memberToAdd == members[i] {
-				w.WriteHeader(http.StatusBadRequest)
-				break
-			}
-		}
-		users, err := rt.db.ListAllUsers()
-		if err != nil {
-			w.WriteHeader(http.StatusBadGateway)
-			return
-		}
-		for i := 0; i < len(users); i++ {
-			if memberToAdd == users[i] {
-				err = rt.db.AddMembers(conversationId, memberToAdd)
-				if err != nil {
-					w.WriteHeader(http.StatusBadGateway)
-					return
-				}
-			}
-
-		}
-		w.WriteHeader(http.StatusBadRequest)
-
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
 	}
 
+	exists, err := rt.db.UserLookup(memberToAdd)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	err = rt.db.AddMembers(conversationId, memberToAdd)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(memberToAdd)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
 
 func (rt *_router) leaveGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

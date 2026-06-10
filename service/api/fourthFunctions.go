@@ -23,6 +23,21 @@ func (rt *_router) getMessage(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 	conversationId := database.ConversationId{conversationIdint}
+	userIdint, err := strconv.Atoi(ps.ByName("Id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	userId := database.UserId{userIdint}
+	member, err := rt.db.IsConversationMember(conversationId, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	if !member {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 	count, err := rt.db.CountMessages()
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
@@ -76,35 +91,42 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 	userId := database.UserId{userIdint}
-	conversations, err := rt.db.GetConversations(userId)
+	conversationIdint, err := strconv.Atoi(ps.ByName("conversationId"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	newuserId, err := rt.db.GetUserId(requestData.Conversation)
+	sourceConversation := database.ConversationId{conversationIdint}
+	member, err := rt.db.IsConversationMember(sourceConversation, userId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	if !member {
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	for i := 0; i < len(conversations); i++ {
-		conversation, err := rt.db.GetConversation(conversations[i])
+	targetConversation, err := rt.db.CheckIfInConversation(userId, requestData.Conversation)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+	if targetConversation.Id == 0 {
+		targetConversation, err = rt.db.StartConversation(userId, []string{requestData.Conversation})
 		if err != nil {
 			w.WriteHeader(http.StatusBadGateway)
 			return
 		}
-		if conversation.Name == requestData.Conversation || conversation.Members[0] == newuserId || conversation.Members[1] == newuserId {
-
-			err = rt.db.ForwardMessage(userId, messageId, conversations[i])
-			if err != nil {
-				w.WriteHeader(http.StatusBadGateway)
-				return
-			}
-			break
-		}
 	}
 
-	err = json.NewEncoder(w).Encode(messageId)
+	newMessageId, err := rt.db.ForwardMessage(userId, messageId, targetConversation)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(newMessageId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
@@ -137,14 +159,16 @@ func (rt *_router) deleteMessage(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	if message.Sender == userId {
-		err = rt.db.DeleteMessage(messageId, conversationId)
-		if err != nil {
-			w.WriteHeader(http.StatusBadGateway)
-			return
-		}
+	if message.Sender != userId {
+		w.WriteHeader(http.StatusForbidden)
+		return
 	}
 
+	err = rt.db.DeleteMessage(messageId, conversationId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 }
 
 func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -181,6 +205,7 @@ func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps htt
 			return
 		}
 		if userId == comment.User {
+			w.WriteHeader(http.StatusConflict)
 			return
 		}
 	}
@@ -288,11 +313,14 @@ func (rt *_router) uncommentMessage(w http.ResponseWriter, r *http.Request, ps h
 		return
 	}
 
-	if comment.User == userId {
-		err = rt.db.DeleteComment(commentId, messageId)
-		if err != nil {
-			w.WriteHeader(http.StatusBadGateway)
-			return
-		}
+	if comment.User != userId {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	err = rt.db.DeleteComment(commentId, messageId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 }

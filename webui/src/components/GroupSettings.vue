@@ -23,7 +23,7 @@ export default {
 				this.loading = true;
 				this.errormsg = null;
 				try {
-					let response = await this.$axios.get(this.path+"/GroupMembers");
+					let response = await this.$axios.get(this.path+"/groupMembers");
 					this.members = response.data
 				} catch (e) {
 					this.errormsg = e.toString();
@@ -38,12 +38,12 @@ export default {
 			this.$emit('save');
 		},
 		async addNewMember(newItem){
-			await this.$axios.post(this.path+"/GroupMembers", {name: newItem});
+			await this.$axios.post(this.path+"/groupMembers", {name: newItem});
 			await this.refresh();
 			this.save()
 		},
 		async leave(){
-			await this.$axios.delete(this.path+"/GroupMembers")
+			await this.$axios.delete(this.path+"/groupMembers")
 			let result = this.path.split('/').slice(0, 3).join('/');
 			this.close()
 			this.$router.push(result)

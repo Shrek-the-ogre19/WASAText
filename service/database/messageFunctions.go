@@ -2,6 +2,7 @@ package database
 
 import (
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -31,12 +32,15 @@ func (db *appdbimpl) CreateMessage(senderId UserId, conversationId ConversationI
 		user, userErr := db.GetUser(senderId)
 		if userErr == nil {
 			senderName := user.Name
-			//For snippet we cut username to 6 characters and text to 30
+			// For snippet we cut username to 6 characters and text to 30
 			if len(senderName) > 6 {
 				senderName = senderName[:6] + "..."
 			}
 			snippet := senderName + ": " + text
-			db.UpdateConversationHead(conversationId, snippet, timestamp)
+			err = db.UpdateConversationHead(conversationId, snippet, timestamp)
+			if err != nil {
+				return MessageId{}, err
+			}
 		}
 	}
 
@@ -68,38 +72,102 @@ func (db *appdbimpl) GetMessage(id MessageId) (Message, error) {
 	return message, err
 }
 
-func (db *appdbimpl) UpdateStatus(id MessageId) error {
-	var newstatus = "read"
-	_, err := db.c.Exec(`UPDATE messages
-SET status = ?
-WHERE id = ?;`, newstatus, id.Id)
+func readByContains(readBy string, userId UserId) bool {
+	if readBy == "" {
+		return false
+	}
+	for _, part := range strings.Split(readBy, ",") {
+		if part == "" {
+			continue
+		}
+		id, err := strconv.Atoi(part)
+		if err == nil && id == userId.Id {
+			return true
+		}
+	}
+	return false
+}
+
+func appendReadBy(readBy string, userId UserId) string {
+	if readByContains(readBy, userId) {
+		return readBy
+	}
+	userIdStr := strconv.Itoa(userId.Id)
+	if readBy == "" {
+		return userIdStr
+	}
+	return readBy + "," + userIdStr
+}
+
+func (db *appdbimpl) MarkMessageRead(messageId MessageId, readerId UserId) error {
+	message, err := db.GetMessage(messageId)
+	if err != nil {
+		return err
+	}
+	if message.Sender.Id == readerId.Id {
+		return nil
+	}
+
+	var readBy string
+	err = db.c.QueryRow("SELECT COALESCE(readBy, '') FROM messages WHERE id = ?", messageId.Id).Scan(&readBy)
+	if err != nil {
+		return err
+	}
+	readBy = appendReadBy(readBy, readerId)
+	_, err = db.c.Exec(`UPDATE messages SET readBy = ? WHERE id = ?;`, readBy, messageId.Id)
+	if err != nil {
+		return err
+	}
+
+	conversation, err := db.GetConversation(message.ConversationId)
+	if err != nil {
+		return err
+	}
+
+	allRead := true
+	for i := 0; i < len(conversation.Members); i++ {
+		member := conversation.Members[i]
+		if member.Id == message.Sender.Id {
+			continue
+		}
+		if !readByContains(readBy, member) {
+			allRead = false
+			break
+		}
+	}
+
+	status := "sent"
+	if allRead && len(conversation.Members) > 1 {
+		status = "read"
+	}
+	_, err = db.c.Exec(`UPDATE messages SET status = ? WHERE id = ?;`, status, messageId.Id)
 	return err
 }
 
-func (db *appdbimpl) ForwardMessage(userId UserId, messageId MessageId, conversationId ConversationId) error {
+func (db *appdbimpl) ForwardMessage(userId UserId, messageId MessageId, conversationId ConversationId) (MessageId, error) {
 	id, err := db.CountMessages()
 	if err != nil {
-		return err
+		return MessageId{}, err
 	}
 	status := "sent"
 	timestamp := time.Now().String()
 
 	message, err := db.GetMessage(messageId)
 	if err != nil {
-		return err
+		return MessageId{}, err
 	}
 	text := "FORWARDED: " + message.Content
 
-	_, err = db.c.Exec("INSERT INTO messages (id, status, content, comments, timestamp, senderId, conversationId) VALUES (?, ?, ?, ?, ?, ?, ?)", id+1, status, text, "", timestamp, userId.Id, conversationId.Id)
+	_, err = db.c.Exec("INSERT INTO messages (id, status, content, comments, timestamp, senderId, conversationId, readBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", id+1, status, text, "", timestamp, userId.Id, conversationId.Id, "")
 	if err != nil {
-		return err
+		return MessageId{}, err
 	}
 	err = db.UpdateContent(conversationId, id+1)
 	if err == nil {
 		user, userErr := db.GetUser(userId)
 		if userErr == nil {
 			senderName := user.Name
-			//For snippet we cut username to 6 characters and text to 30
+			// For snippet we cut username to 6 characters and text to 30
 			if len(senderName) > 6 {
 				senderName = senderName[:6] + "..."
 			}
@@ -108,36 +176,38 @@ func (db *appdbimpl) ForwardMessage(userId UserId, messageId MessageId, conversa
 				snippetText = snippetText[:30] + "..."
 			}
 			snippet := senderName + " :  " + snippetText
-			db.UpdateConversationHead(conversationId, snippet, timestamp)
+			err = db.UpdateConversationHead(conversationId, snippet, timestamp)
+			if err != nil {
+				return MessageId{}, err
+			}
 		}
 	}
-	return err
+	return MessageId{id + 1}, err
 }
 
 func (db *appdbimpl) DeleteMessage(messageId MessageId, conversationId ConversationId) error {
 	_, err := db.c.Exec(`UPDATE messages
-SET status = ?, content = ?, comments = ? , timestamp = ?
+SET status = ?, content = ?, comments = ?, timestamp = ?
 WHERE id = ?;`, "", "", "", "", messageId.Id)
 
-	if err == nil {
-		db.RemoveFromContent(conversationId, messageId.Id)
-
+	if err != nil {
+		return err
 	}
-	return err
+	return db.RemoveFromContent(conversationId, messageId.Id)
 }
 
 func (db *appdbimpl) GetComments(id MessageId) ([]CommentId, error) {
 	var comments []CommentId
 	var commentsR string
 
-	err := db.c.QueryRow("SELECT  comments FROM messages WHERE id = ?", id.Id).Scan(&commentsR)
+	err := db.c.QueryRow("SELECT comments FROM messages WHERE id = ?", id.Id).Scan(&commentsR)
 	comments = ConvertComments(commentsR)
 	return comments, err
 }
 
 func (db *appdbimpl) AddCommentToMessage(messageId MessageId, newCommentId CommentId) error {
 	var commentsR string
-	err := db.c.QueryRow("SELECT  comments FROM messages WHERE id = ?", messageId.Id).Scan(&commentsR)
+	err := db.c.QueryRow("SELECT comments FROM messages WHERE id = ?", messageId.Id).Scan(&commentsR)
 	if err != nil {
 		return err
 	}
@@ -151,7 +221,7 @@ WHERE id = ?;`, commentsR, messageId.Id)
 
 func (db *appdbimpl) RemoveCommentFromMessage(messageId MessageId, oldCommentId CommentId) error {
 	var commentsR string
-	err := db.c.QueryRow("SELECT  comments FROM messages WHERE id = ?", messageId.Id).Scan(&commentsR)
+	err := db.c.QueryRow("SELECT comments FROM messages WHERE id = ?", messageId.Id).Scan(&commentsR)
 	if err != nil {
 		return err
 	}

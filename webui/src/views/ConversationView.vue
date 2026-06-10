@@ -1,12 +1,14 @@
 <script>
 import GroupSettings from "../components/GroupSettings.vue";
 import Message from "../components/Message.vue";
-import ConversationHead from "../components/ConversationHead.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
+import { startAutoRefresh } from "../services/refresh.js";
 
 export default {
 	components: {
-		ConversationHead, GroupSettings,
+		GroupSettings,
 		Message,
+		ErrorMsg,
 	},
 	data: function() {
 		return {
@@ -23,6 +25,7 @@ export default {
 			picture: null,
 			showSettingsModal: false,
 			selectedFile : null,
+			stopAutoRefresh: null,
 		}
 	},
 	methods: {
@@ -34,13 +37,9 @@ export default {
 				this.conversation = response.data;
 				this.name = this.conversation.Name;
 				this.groupchat = this.conversation.Groupchat;
-				this.messages = this.conversation.Content.reverse()
+				this.messages = [...this.conversation.Content].reverse();
 				this.members = this.conversation.Members;
-				this.picture = this.conversation.Picture
-
-				let result = path.substring(0, path.lastIndexOf('/'))
-				this.picture = await this.$axios.get(result)
-
+				this.picture = this.conversation.Picture;
 			} catch (e) {
 				this.errormsg = e.toString();
 			}
@@ -48,16 +47,19 @@ export default {
 		},
 
 		async sendMessage(text){
-			if (this.image!= null){
-				text = text+this.image
+			if (this.image != null) {
+				text = text + this.image;
 			}
-			try{
+			try {
 				await this.$axios.post(this.path, {content: text});
-				this.showModal = false
-			}catch(e){
+				this.showModal = false;
+				this.text = "";
+				this.image = null;
+				this.selectedFile = null;
+				await this.refresh();
+			} catch (e) {
 				this.errormsg = e.toString();
 			}
-			this.text = null
 		},
 		async openSettings(){
 			if (this.groupchat == true){
@@ -68,7 +70,6 @@ export default {
 			this.showSettingsModal=false;
 			await this.refresh()
 		},
-
 
 		async onFileChanged (event) {
 			this.selectedFile = event.target.files[0]
@@ -81,20 +82,27 @@ export default {
 				const reader = new FileReader();
 				reader.onload = () => resolve(reader.result);
 				reader.onerror = (error) => reject(error);
-
 				reader.readAsDataURL(file);
 			});
-		},},
+		},
+	},
 
 	mounted() {
-		this.refresh()
-
-	}
-
+		this.refresh();
+		this.stopAutoRefresh = startAutoRefresh(() => this.refresh());
+	},
+	beforeUnmount() {
+		if (this.stopAutoRefresh) {
+			this.stopAutoRefresh();
+		}
+	},
 }
 </script>
 
 <template>
+	<div v-if="errormsg">
+		<ErrorMsg :msg="errormsg" />
+	</div>
 	<div>
 		<div class="settings">
 			<button @click = "openSettings">
@@ -129,10 +137,10 @@ export default {
 	<br>
 	<br>
 	<br>
-	<div v-for="message in messages">
+	<div v-for="message in messages" :key="message.Id.Id">
 		<Message
-			:path=path
-			:messageId=message.Id
+			:path="path"
+			:messageId="message.Id.Id"
 			@save="refresh()"
 		/>
 	</div>

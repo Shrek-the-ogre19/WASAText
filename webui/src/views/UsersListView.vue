@@ -1,6 +1,7 @@
 <script>
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
+import { startAutoRefresh } from "@/services/refresh.js";
 
 export default {
 	components: {ErrorMsg, LoadingSpinner},
@@ -10,6 +11,7 @@ export default {
 			loading: false,
 			users: null,
 			path: this.$route.path,
+			stopAutoRefresh: null,
 		}
 	},
 	methods: {
@@ -17,7 +19,8 @@ export default {
 			this.loading = true;
 			this.errormsg = null;
 			try {
-				let response = await this.$axios.get("mainpage/0/users");
+				const userId = localStorage.getItem("id");
+				let response = await this.$axios.get(`/mainpage/${userId}/users`);
 				this.users = response.data;
 			} catch (e) {
 				this.errormsg = e.toString();
@@ -26,8 +29,14 @@ export default {
 		}
 	},
 	mounted() {
-		this.refresh()
-	}
+		this.refresh();
+		this.stopAutoRefresh = startAutoRefresh(() => this.refresh());
+	},
+	beforeUnmount() {
+		if (this.stopAutoRefresh) {
+			this.stopAutoRefresh();
+		}
+	},
 }
 </script>
 
@@ -42,7 +51,7 @@ export default {
 			:msg = "errormsg"
 		/>
 	</div>
-	<div v-for="user in users">
+	<div v-for="user in users" :key="user">
 		<div class="user">
 			{{ user }}
 		</div>

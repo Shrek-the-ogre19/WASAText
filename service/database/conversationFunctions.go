@@ -92,7 +92,7 @@ func (db *appdbimpl) GetConversation(id ConversationId) (Conversation, error) {
 	var contentR string
 	var membersR string
 
-	err := db.c.QueryRow("SELECT  snippet, name, picture, date, content, groupchat, members FROM conversations WHERE id = ?", id.Id).Scan(&snippet, &name, &picture, &date, &contentR, &groupchat, &membersR)
+	err := db.c.QueryRow("SELECT snippet, name, picture, date, content, groupchat, members FROM conversations WHERE id = ?", id.Id).Scan(&snippet, &name, &picture, &date, &contentR, &groupchat, &membersR)
 	content = ConvertMessages(contentR)
 	members = ConvertUsers(membersR)
 
@@ -105,7 +105,7 @@ func (db *appdbimpl) GetConversation(id ConversationId) (Conversation, error) {
 
 func (db *appdbimpl) ChangeConversationName(id ConversationId, NewName string) error {
 	var groupchat bool
-	err := db.c.QueryRow("SELECT  groupchat FROM conversations WHERE id = ?", id.Id).Scan(&groupchat)
+	err := db.c.QueryRow("SELECT groupchat FROM conversations WHERE id = ?", id.Id).Scan(&groupchat)
 
 	if groupchat {
 		_, err = db.c.Exec(`UPDATE conversations
@@ -117,7 +117,7 @@ WHERE id = ?;`, NewName, id.Id)
 
 func (db *appdbimpl) ChangeConversationPhoto(id ConversationId, NewPicture string) error {
 	var groupchat bool
-	err := db.c.QueryRow("SELECT  groupchat FROM conversations WHERE id = ?", id.Id).Scan(&groupchat)
+	err := db.c.QueryRow("SELECT groupchat FROM conversations WHERE id = ?", id.Id).Scan(&groupchat)
 
 	if groupchat {
 		_, err = db.c.Exec(`UPDATE conversations
@@ -131,7 +131,7 @@ func (db *appdbimpl) GetAllMembers(id ConversationId) ([]string, error) {
 	var membersR string
 	var members []UserId
 	var memberNames []string
-	err := db.c.QueryRow("SELECT  members FROM conversations WHERE id = ?", id.Id).Scan(&membersR)
+	err := db.c.QueryRow("SELECT members FROM conversations WHERE id = ?", id.Id).Scan(&membersR)
 	if err == nil {
 		members = ConvertUsers(membersR)
 		for i := 0; i < len(members); i++ {
@@ -145,7 +145,7 @@ func (db *appdbimpl) GetAllMembers(id ConversationId) ([]string, error) {
 
 func (db *appdbimpl) AddMembers(id ConversationId, Name string) error {
 	var membersR string
-	err := db.c.QueryRow("SELECT  members FROM conversations WHERE id = ?", id.Id).Scan(&membersR)
+	err := db.c.QueryRow("SELECT members FROM conversations WHERE id = ?", id.Id).Scan(&membersR)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ WHERE id = ?;`, conversations, newUserId.Id)
 func (db *appdbimpl) LeaveGroup(convid ConversationId, userid UserId) error {
 	var membersR string
 	useridstr := strconv.Itoa(userid.Id)
-	err := db.c.QueryRow("SELECT  members FROM conversations WHERE id = ?", convid.Id).Scan(&membersR)
+	err := db.c.QueryRow("SELECT members FROM conversations WHERE id = ?", convid.Id).Scan(&membersR)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ WHERE id = ?;`, newmembers, convid.Id)
 
 	var conversationsR string
 	convidstr := strconv.Itoa(convid.Id)
-	err = db.c.QueryRow("SELECT  conversations FROM users WHERE id = ?", userid.Id).Scan(&conversationsR)
+	err = db.c.QueryRow("SELECT conversations FROM users WHERE id = ?", userid.Id).Scan(&conversationsR)
 	if err != nil {
 		return err
 	}
@@ -224,7 +224,7 @@ WHERE id = ?;`, newconversations, userid.Id)
 
 func (db *appdbimpl) CheckGroupchat(id ConversationId) (bool, error) {
 	var groupchat bool
-	err := db.c.QueryRow("SELECT  groupchat FROM conversations WHERE id = ?", id.Id).Scan(&groupchat)
+	err := db.c.QueryRow("SELECT groupchat FROM conversations WHERE id = ?", id.Id).Scan(&groupchat)
 	if groupchat {
 		return true, err
 	} else {
@@ -241,7 +241,7 @@ WHERE id = ?;`, snippetNew, dateNew, id.Id)
 
 func (db *appdbimpl) UpdateContent(id ConversationId, newMessageId int) error {
 	var contentR string
-	err := db.c.QueryRow("SELECT  content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
+	err := db.c.QueryRow("SELECT content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ WHERE id = ?;`, contentR, id.Id)
 
 func (db *appdbimpl) RemoveFromContent(id ConversationId, oldMessageId int) error {
 	var contentR string
-	err := db.c.QueryRow("SELECT  content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
+	err := db.c.QueryRow("SELECT content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
 	if err != nil {
 		return err
 	}
@@ -276,9 +276,22 @@ WHERE id = ?;`, newcontent, id.Id)
 
 func (db *appdbimpl) GetConversationMessages(id ConversationId) ([]MessageId, error) {
 	var contentR string
-	err := db.c.QueryRow("SELECT  content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
+	err := db.c.QueryRow("SELECT content FROM conversations WHERE id = ?", id.Id).Scan(&contentR)
 	messages := ConvertMessages(contentR)
 	return messages, err
+}
+
+func (db *appdbimpl) IsConversationMember(conversationId ConversationId, userId UserId) (bool, error) {
+	conversations, err := db.GetConversations(userId)
+	if err != nil {
+		return false, err
+	}
+	for i := 0; i < len(conversations); i++ {
+		if conversations[i].Id == conversationId.Id {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (db *appdbimpl) CheckIfInConversation(userId UserId, receiver string) (ConversationId, error) {

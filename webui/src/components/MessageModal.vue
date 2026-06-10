@@ -62,9 +62,9 @@ export default {
 			<div v-if="showEmojiPicker">
 				<emoji-picker @emoji-click="emojiClick"></emoji-picker>
 			</div>
-			<button @click="showEmojiModal=true">&#128512</button>
+			<button @click="showEmojiModal=true">&#128512;</button>
 			<div v-if="showEmojiModal">
-				<div v-for="emoji in emojis">
+				<div v-for="emoji in emojis" :key="emoji.Id.Id">
 					<button @click="uncomment(emoji.Id.Id)">{{emoji.Content}}</button>
 				</div>
 			</div>

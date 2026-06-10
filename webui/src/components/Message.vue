@@ -1,13 +1,14 @@
 <script>
-import GroupSettings from "./GroupSettings.vue";
 import MessageModal from "./MessageModal.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
+import { startAutoRefresh } from "../services/refresh.js";
 
 export default {
 	name: 'Message',
-	components: {MessageModal, GroupSettings},
+	components: {MessageModal, ErrorMsg},
 	props: {
 		path: String,
-		messageId: String
+		messageId: [String, Number]
 	},
 	emits: ['save'],
 	data: function() {
@@ -22,7 +23,9 @@ export default {
 			text: null,
 			image: null,
 			senderName: null,
-			received: true
+			received: true,
+			forwarded: false,
+			stopAutoRefresh: null,
 		}
 	},methods: {
 		async refresh() {
@@ -34,18 +37,21 @@ export default {
 				let response = await this.$axios.get(`${this.path}//${this.messageId}`);
 				this.message = response.data;
 				let str = this.message.Content;
+				this.forwarded = str.startsWith('FORWARDED: ');
+				if (this.forwarded) {
+					str = str.slice('FORWARDED: '.length);
+				}
 				let parts = str.split('data:image');
 				this.text = parts[0]
 				if (parts[1]){
 				this.image = 'data:image' + parts[1]}
-				response = await this.$axios.get(`/mainpage/0/users/${this.message.Sender.Id}`)
-				this.senderName = response.data.Name
 				let start = this.path.indexOf('/mainpage/') + '/mainpage/'.length;
 				let end = this.path.indexOf('/', start);
-				let currentUser = this.path.substring(start, end);
-				if (currentUser == this.message.Sender.Id){
-					this.received=false
-				}
+				let mainpageUserId = this.path.substring(start, end);
+				const senderId = this.message.Sender?.Id ?? this.message.Sender;
+				response = await this.$axios.get(`/mainpage/${mainpageUserId}/users/${senderId}`)
+				this.senderName = response.data.Name
+				this.received = Number(mainpageUserId) !== Number(senderId);
 				response = await this.$axios.get(`${this.path}//${this.messageId}/comments`);
 				this.comments = response.data;
 				const senderCache = {};
@@ -54,13 +60,13 @@ export default {
 					response =await this.$axios.get(`${this.path}//${this.messageId}/comments/${id}`);
 					const emoji = response.data;
 					this.emojis.push(emoji)
-					const senderId = emoji.User?.Id ?? emoji.User;
-					if (senderId !== undefined && senderId !== null) {
-						if (!senderCache[senderId]) {
-							const senderResponse = await this.$axios.get(`/mainpage/0/users/${senderId}`);
-							senderCache[senderId] = senderResponse.data.Name;
+					const emojiSenderId = emoji.User?.Id ?? emoji.User;
+					if (emojiSenderId !== undefined && emojiSenderId !== null) {
+						if (!senderCache[emojiSenderId]) {
+							const senderResponse = await this.$axios.get(`/mainpage/${mainpageUserId}/users/${emojiSenderId}`);
+							senderCache[emojiSenderId] = senderResponse.data.Name;
 						}
-						this.emojiSenderNames[emoji.Id] = senderCache[senderId];
+						this.emojiSenderNames[emoji.Id] = senderCache[emojiSenderId];
 					}
 				}
 
@@ -80,13 +86,22 @@ export default {
 		}
 	},
 	mounted() {
-		this.refresh()
-	}
+		this.refresh();
+		this.stopAutoRefresh = startAutoRefresh(() => this.refresh());
+	},
+	beforeUnmount() {
+		if (this.stopAutoRefresh) {
+			this.stopAutoRefresh();
+		}
+	},
 }
 </script>
 
 <template>
 	<div>
+		<div v-if="errormsg">
+			<ErrorMsg :msg="errormsg" />
+		</div>
 		<div :class="['message-container', received ? 'received' : 'sent']">
 			<button class="message-bubble" @click="showMessageModal = true">
 				<!-- Top part: Name -->
@@ -96,6 +111,7 @@ export default {
 
 				<!-- Biggest part: Content (text and image) -->
 				<div class="message-content">
+					<div v-if="forwarded" class="forwarded-label">Forwarded</div>
 					<div v-if="text" class="message-text">{{ text }}</div>
 					<div v-if="image" class="message-image">
 						<img :src="image" class="img" alt="messagePicture">
@@ -112,7 +128,6 @@ export default {
 						<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#check"/></svg>
 						<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#check"/></svg>
 					</div>
-					<span class="message-status">{{ message?.Status }}</span>
 					<span class="message-timestamp">{{ message?.Timestamp }}</span>
 				</div>
 
@@ -209,6 +224,15 @@ export default {
 	line-height: 1.5;
 	margin-bottom: 8px;
 	color: #212529;
+}
+
+.forwarded-label {
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: #6c757d;
+	margin-bottom: 6px;
+	letter-spacing: 0.04em;
 }
 
 .message-image {

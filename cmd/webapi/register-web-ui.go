@@ -4,10 +4,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/Shrek-the-ogre19/WASAText/webui"
 	"io/fs"
 	"net/http"
 	"strings"
+
+	"github.com/Shrek-the-ogre19/WASAText/webui"
 )
 
 func registerWebUI(hdl http.Handler) (http.Handler, error) {

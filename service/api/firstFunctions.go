@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-
 	"strconv"
 
 	"github.com/Shrek-the-ogre19/WASAText/service/database"
@@ -39,7 +38,13 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
-	err = json.NewEncoder(w).Encode(id.Id)
+	token, err := rt.createToken(id.Id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(map[string]string{"identifier": token})
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return

@@ -13,6 +13,7 @@ export default {
 		logout(){
 			this.userId = null
 			localStorage.removeItem("id")
+			localStorage.removeItem("identifier")
 		}
 	},
 	mounted() {

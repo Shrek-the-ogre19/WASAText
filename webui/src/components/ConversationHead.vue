@@ -28,6 +28,14 @@ export default{
 			this.$router.push(`${this.path}/${conversationId}`)
 		},
 	},
+	watch: {
+		conversation: {
+			deep: true,
+			handler() {
+				this.refresh();
+			},
+		},
+	},
 	mounted() {
 		this.refresh()
 	}

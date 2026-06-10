@@ -70,7 +70,7 @@ func (db *appdbimpl) ListAllUsers() ([]string, error) {
 
 func (db *appdbimpl) UserLookup(name string) (bool, error) {
 	var bool bool
-	err := db.c.QueryRow("SELECT 1 From users WHERE name = ?", name).Scan(&bool)
+	err := db.c.QueryRow("SELECT 1 FROM users WHERE name = ?", name).Scan(&bool)
 	if err == nil {
 		return bool, err
 	}

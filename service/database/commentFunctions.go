@@ -34,7 +34,7 @@ func (db *appdbimpl) GetComment(id CommentId) (Comment, error) {
 
 func (db *appdbimpl) DeleteComment(id CommentId, messageId MessageId) error {
 	_, err := db.c.Exec(`UPDATE comments
-SET  content = ?
+SET content = ?
 WHERE id = ?;`, "", id.Id)
 
 	if err == nil {
@@ -45,7 +45,7 @@ WHERE id = ?;`, "", id.Id)
 
 func (db *appdbimpl) CheckIfUserCommented(id CommentId, userId UserId) (bool, error) {
 	var userIdR int
-	err := db.c.QueryRow("SELECT  user FROM comments WHERE id = ?", id.Id).Scan(&userIdR)
+	err := db.c.QueryRow("SELECT user FROM comments WHERE id = ?", id.Id).Scan(&userIdR)
 	if userIdR == userId.Id {
 		return true, err
 	}

@@ -1,12 +1,13 @@
 <script>
 
 import ConversationHead from "../components/ConversationHead.vue";
-import ReplacingButton from "../components/ReplacingButton.vue";
+import ErrorMsg from "@/components/ErrorMsg.vue";
+import { startAutoRefresh } from "../services/refresh.js";
 
 export default {
 	components:{
-		ReplacingButton,
-		ConversationHead
+		ConversationHead,
+		ErrorMsg,
 	},
 	data: function() {
 		return {
@@ -17,7 +18,8 @@ export default {
 			showModal: false,
 			id: null,
 			receivers: null,
-			conversationId: null
+			conversationId: null,
+			stopAutoRefresh: null,
 		}
 	},
 	methods: {
@@ -34,7 +36,8 @@ export default {
 		},
 		async startConversation(receivers) {
 			try {
-				this.conversationId = (await this.$axios.post(this.path, {receivers: receivers})).data.Id;
+				const data = (await this.$axios.post(this.path, {receivers: receivers})).data;
+				this.conversationId = data.Id?.Id ?? data.Id;
 				this.showModal = false;
 				this.$router.push(`${this.path}/${this.conversationId}`)
 			} catch (e) {
@@ -43,12 +46,21 @@ export default {
 		}
 	},
 	mounted() {
-		this.refresh()
+		this.refresh();
+		this.stopAutoRefresh = startAutoRefresh(() => this.refresh());
+	},
+	beforeUnmount() {
+		if (this.stopAutoRefresh) {
+			this.stopAutoRefresh();
+		}
 	},
 }
 </script>
 
 <template>
+	<div v-if="errormsg">
+		<ErrorMsg :msg="errormsg" />
+	</div>
 	<p>
 		<button class="button" @click="showModal = true">+</button>
 	</p>
@@ -60,7 +72,7 @@ export default {
 			<button @click="startConversation(receivers)">CONFIRM</button>
 		</div>
 	</div>
-	<div v-for="conversation in conversations" class="conversation">
+	<div v-for="conversation in conversations" :key="conversation.Id.Id" class="conversation">
 		<ConversationHead
 			:path=path
 			:conversation="conversation"
