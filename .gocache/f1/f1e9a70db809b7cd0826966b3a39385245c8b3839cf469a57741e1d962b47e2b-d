@@ -1,0 +1,9 @@
+./commentFunctions.go
+./components.go
+./conversationFunctions.go
+./database.go
+./get-name.go
+./helpingFunctions.go
+./messageFunctions.go
+./set-name.go
+./userFunctions.go

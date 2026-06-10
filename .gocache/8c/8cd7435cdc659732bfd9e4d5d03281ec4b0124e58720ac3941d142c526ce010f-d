@@ -1,0 +1,4 @@
+./cors.go
+./load-configuration.go
+./main.go
+./register-web-ui-stub.go
