@@ -1,7 +1,7 @@
 <script>
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
-import { startAutoRefresh } from "@/services/refresh.js";
+import { startAutoRefresh } from "@/services/axios.js";
 
 export default {
 	components: {ErrorMsg, LoadingSpinner},

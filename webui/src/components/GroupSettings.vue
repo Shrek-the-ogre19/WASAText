@@ -1,6 +1,6 @@
 <script>
 import ReplacingButton from "./ReplacingButton.vue";
-import { GROUP_DEFAULT_PICTURE, isDefaultPicture } from "../services/picture.js";
+import { GROUP_DEFAULT_PICTURE, isDefaultPicture } from "../services/axios.js";
 
 export default {
 	name: 'GroupSettings',

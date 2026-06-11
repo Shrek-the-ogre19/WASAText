@@ -3,7 +3,7 @@ import {
 	GROUP_DEFAULT_PICTURE,
 	USER_DEFAULT_PICTURE,
 	isDefaultPicture,
-} from "../services/picture.js";
+} from "../services/axios.js";
 
 export default{
 	name: 'ConversationHead',

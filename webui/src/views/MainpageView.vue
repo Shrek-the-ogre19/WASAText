@@ -2,7 +2,7 @@
 
 import ConversationHead from "../components/ConversationHead.vue";
 import ErrorMsg from "@/components/ErrorMsg.vue";
-import { startAutoRefresh } from "../services/refresh.js";
+import { startAutoRefresh } from "../services/axios.js";
 
 export default {
 	components:{
