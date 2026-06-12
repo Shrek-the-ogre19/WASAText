@@ -38,7 +38,7 @@ export default {
 			this.loading = true;
 			this.errormsg = null;
 			try {
-				let response = await this.$axios.get(this.path);
+				let response = await this.$axios.get(`/mainpage/${this.$route.params.Id}/conversations/${this.$route.params.conversationId}`);
 				this.conversation = response.data;
 				this.name = this.conversation.Name;
 				this.groupchat = this.conversation.Groupchat;
@@ -56,7 +56,7 @@ export default {
 				text = text + this.image;
 			}
 			try {
-				await this.$axios.post(this.path, {content: text});
+				await this.$axios.post(`/mainpage/${this.$route.params.Id}/conversations/${this.$route.params.conversationId}`, {content: text});
 				this.showModal = false;
 				this.text = "";
 				this.image = null;

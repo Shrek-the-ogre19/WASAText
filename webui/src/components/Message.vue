@@ -144,7 +144,8 @@ export default {
 
 		<MessageModal
 			:showModal="showMessageModal"
-			:path="`${this.path}//${this.messageId}`"
+			:conversationPath="path"
+			:messageId="messageId"
 			:emojis="emojis"
 			@close="showMessageModal = false"
 			@save="save"

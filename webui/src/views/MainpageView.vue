@@ -27,7 +27,7 @@ export default {
 			this.loading = true;
 			this.errormsg = null;
 			try {
-				let response = await this.$axios.get(this.path);
+				let response = await this.$axios.get(`/mainpage/${this.$route.params.Id}/conversations`);
 				this.conversations = [...(response.data ?? [])].reverse()
 			} catch (e) {
 				this.errormsg = e.toString();
@@ -36,7 +36,7 @@ export default {
 		},
 		async startConversation(receivers) {
 			try {
-				const data = (await this.$axios.post(this.path, {receivers: receivers})).data;
+				const data = (await this.$axios.post(`/mainpage/${this.$route.params.Id}/conversations`, {receivers: receivers})).data;
 				this.conversationId = data.Id?.Id ?? data.Id;
 				this.showModal = false;
 				this.$router.push(`${this.path}/${this.conversationId}`)

@@ -6,7 +6,8 @@ export default {
 	name: 'MessageModal',
 	components: {ReplacingButton},
 	props: {
-		path: String,
+		conversationPath: String,
+		messageId: [String, Number],
 		showModal: Boolean,
 		emojis: Array
 	},
@@ -18,21 +19,21 @@ export default {
 		}},
 	methods:{
 		async emojiClick(event) {
-			await this.$axios.post(`${this.path}/comments`,{comment: event.detail.unicode})
+			await this.$axios.post(`${this.conversationPath}//${this.messageId}/comments`,{comment: event.detail.unicode})
 			this.showEmojiPicker = false
 			this.save()
 		},
 		async uncomment(id){
-			await this.$axios.delete(`${this.path}/comments/${id}`)
+			await this.$axios.delete(`${this.conversationPath}//${this.messageId}/comments/${id}`)
 			this.showEmojiModal = false
 			this.save()
 		},
 		async forwardMessage(receiver){
-			await this.$axios.post(this.path,{conversation: receiver})
+			await this.$axios.post(`${this.conversationPath}//${this.messageId}`,{conversation: receiver})
 			this.save()
 		},
 		async deleteMessage(){
-			await this.$axios.delete(this.path)
+			await this.$axios.delete(`${this.conversationPath}//${this.messageId}`)
 			this.save()
 		},
 		close() {
