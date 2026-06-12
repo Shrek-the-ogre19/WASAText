@@ -6,7 +6,8 @@ export default {
 	name: 'MessageModal',
 	components: {ReplacingButton},
 	props: {
-		conversationPath: String,
+		userId: [String, Number],
+		conversationId: [String, Number],
 		messageId: [String, Number],
 		showModal: Boolean,
 		emojis: Array
@@ -19,21 +20,21 @@ export default {
 		}},
 	methods:{
 		async emojiClick(event) {
-			await this.$axios.post(`${this.conversationPath}//${this.messageId}/comments`,{comment: event.detail.unicode})
+			await this.$axios.post(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}/comments`,{comment: event.detail.unicode})
 			this.showEmojiPicker = false
 			this.save()
 		},
 		async uncomment(id){
-			await this.$axios.delete(`${this.conversationPath}//${this.messageId}/comments/${id}`)
+			await this.$axios.delete(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}/comments/${id}`)
 			this.showEmojiModal = false
 			this.save()
 		},
 		async forwardMessage(receiver){
-			await this.$axios.post(`${this.conversationPath}//${this.messageId}`,{conversation: receiver})
+			await this.$axios.post(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}`,{conversation: receiver})
 			this.save()
 		},
 		async deleteMessage(){
-			await this.$axios.delete(`${this.conversationPath}//${this.messageId}`)
+			await this.$axios.delete(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}`)
 			this.save()
 		},
 		close() {

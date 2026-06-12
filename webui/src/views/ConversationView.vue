@@ -131,7 +131,8 @@ export default {
 			:showModal="showSettingsModal"
 			:name="name"
 			:picture="picture"
-			:path="path"
+			:userId="$route.params.Id"
+			:conversationId="$route.params.conversationId"
 			@close="showSettingsModal = false"
 			@save="saveSettings"
 		/>
@@ -158,7 +159,8 @@ export default {
 	<br>
 	<div v-for="message in messages" :key="message.Id?.Id ?? message.Id">
 		<Message
-			:path="path"
+			:userId="$route.params.Id"
+			:conversationId="$route.params.conversationId"
 			:messageId="message.Id?.Id ?? message.Id"
 			@save="refresh()"
 		/>

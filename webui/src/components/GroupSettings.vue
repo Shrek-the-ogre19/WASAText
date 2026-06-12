@@ -9,7 +9,8 @@ export default {
 		showModal: Boolean,
 		name: String,
 		picture: String,
-		path: String,
+		userId: [String, Number],
+		conversationId: [String, Number],
 
 	},
 	emits: ['close', 'save'],
@@ -24,7 +25,7 @@ export default {
 				this.loading = true;
 				this.errormsg = null;
 				try {
-					let response = await this.$axios.get(this.path+"/groupMembers");
+					let response = await this.$axios.get(`/mainpage/${this.userId}/conversations/${this.conversationId}/groupMembers`);
 					this.members = response.data
 				} catch (e) {
 					this.errormsg = e.toString();
@@ -39,15 +40,14 @@ export default {
 			this.$emit('save');
 		},
 		async addNewMember(newItem){
-			await this.$axios.post(this.path+"/groupMembers", {name: newItem});
+			await this.$axios.post(`/mainpage/${this.userId}/conversations/${this.conversationId}/groupMembers`, {name: newItem});
 			await this.refresh();
 			this.save()
 		},
 		async leave(){
-			await this.$axios.delete(this.path+"/groupMembers")
-			let result = this.path.split('/').slice(0, 3).join('/');
+			await this.$axios.delete(`/mainpage/${this.userId}/conversations/${this.conversationId}/groupMembers`)
 			this.close()
-			this.$router.push(result)
+			this.$router.push(`/mainpage/${this.userId}/conversations`)
 		},
 
 		async changeName(newItem) {
@@ -57,7 +57,7 @@ export default {
 			}
 
 			try {
-				await this.$axios.put(this.path + "/conversationsettings/groupname", {name: newItem});
+				await this.$axios.put(`/mainpage/${this.userId}/conversations/${this.conversationId}/conversationsettings/groupname`, {name: newItem});
 				await this.refresh();
 				this.save()
 			} catch (e) {
@@ -69,7 +69,7 @@ export default {
 			let base64 = await this.fileToBase64(this.selectedFile)
 			this.selectedFile=base64
 			try {
-				await this.$axios.put(this.path + "/conversationsettings/grouppicture", {picture: this.selectedFile});
+				await this.$axios.put(`/mainpage/${this.userId}/conversations/${this.conversationId}/conversationsettings/grouppicture`, {picture: this.selectedFile});
 				await this.refresh();
 				this.save()
 			} catch (e) {

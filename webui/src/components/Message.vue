@@ -7,7 +7,8 @@ export default {
 	name: 'Message',
 	components: {MessageModal, ErrorMsg},
 	props: {
-		path: String,
+		userId: [String, Number],
+		conversationId: [String, Number],
 		messageId: [String, Number]
 	},
 	emits: ['save'],
@@ -34,7 +35,7 @@ export default {
 			this.emojis=[]
 			this.emojiSenderNames = {}
 			try {
-				let response = await this.$axios.get(`${this.path}//${this.messageId}`);
+				let response = await this.$axios.get(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}`);
 				this.message = response.data;
 				let str = this.message.Content;
 				this.forwarded = str.startsWith('FORWARDED: ');
@@ -45,26 +46,23 @@ export default {
 				this.text = parts[0]
 				if (parts[1]){
 				this.image = 'data:image' + parts[1]}
-				let start = this.path.indexOf('/mainpage/') + '/mainpage/'.length;
-				let end = this.path.indexOf('/', start);
-				let mainpageUserId = this.path.substring(start, end);
 				const senderId = this.message.Sender?.Id ?? this.message.Sender;
-				response = await this.$axios.get(`/mainpage/${mainpageUserId}/users/${senderId}`)
+				response = await this.$axios.get(`/mainpage/${this.userId}/users/${senderId}`)
 				this.senderName = response.data.Name
-				this.received = Number(mainpageUserId) !== Number(senderId);
-				response = await this.$axios.get(`${this.path}//${this.messageId}/comments`);
+				this.received = Number(this.userId) !== Number(senderId);
+				response = await this.$axios.get(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}/comments`);
 				this.comments = response.data ?? [];
 				const senderCache = {};
 				for (let i = 0; i < this.comments.length; i++) {
 					const commentId = this.comments[i].Id?.Id ?? this.comments[i].Id;
-					response = await this.$axios.get(`${this.path}//${this.messageId}/comments/${commentId}`);
+					response = await this.$axios.get(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}/comments/${commentId}`);
 					const emoji = response.data;
 					this.emojis.push(emoji)
 					const emojiSenderId = emoji.User?.Id ?? emoji.User;
 					const emojiId = emoji.Id?.Id ?? emoji.Id;
 					if (emojiSenderId !== undefined && emojiSenderId !== null) {
 						if (!senderCache[emojiSenderId]) {
-							const senderResponse = await this.$axios.get(`/mainpage/${mainpageUserId}/users/${emojiSenderId}`);
+							const senderResponse = await this.$axios.get(`/mainpage/${this.userId}/users/${emojiSenderId}`);
 							senderCache[emojiSenderId] = senderResponse.data.Name;
 						}
 						this.emojiSenderNames[emojiId] = senderCache[emojiSenderId];
@@ -82,7 +80,7 @@ export default {
 			this.$emit('save')
 		},
 		async emoji(id){
-			let response =await this.$axios.get(`${this.path}//${this.messageId}/comments/${id}`);
+			let response =await this.$axios.get(`/mainpage/${this.userId}/conversations/${this.conversationId}//${this.messageId}/comments/${id}`);
 			return response.data.Content
 		}
 	},
@@ -144,7 +142,8 @@ export default {
 
 		<MessageModal
 			:showModal="showMessageModal"
-			:conversationPath="path"
+			:userId="userId"
+			:conversationId="conversationId"
 			:messageId="messageId"
 			:emojis="emojis"
 			@close="showMessageModal = false"
